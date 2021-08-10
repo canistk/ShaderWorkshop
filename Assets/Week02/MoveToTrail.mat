@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: MoveToTrail
+  m_Shader: {fileID: 4800000, guid: 52a350351f632074bb9fa7600f8e5e03, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 7ae9e7489b1fb5e4cb5c12606aedf77a, type: 3}
+        m_Scale: {x: 1, y: 0.34}
+        m_Offset: {x: 0, y: 0}
+    - _TintTex:
+        m_Texture: {fileID: 2800000, guid: 2faf9e89557980949ac6cc98515f17f4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _MainScrollSpeedU: 7.79
+    - _MainScrollSpeedV: 16.28
+    - _MainTexAPow: 1
+    - _MainTexMultiplier: 1
+    - _MainTexPow: 0.97
+    - _MainTexVFade: 0.7
+    - _MainTexVFadePow: 1
+    - _Multiplier: 8
+    - _SoftAlpha: 1
+    m_Colors: []
+  m_BuildTextureStacks: []

@@ -188,8 +188,8 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
  
                 // transform normal from view space to world space
                 float3 WorldNormal = mul((float3x3)UNITY_MATRIX_VP, viewNormal);
-                float tmp = dot(WorldNormal, mul((float3x3)UNITY_MATRIX_VP,float3(0,0,1)));
-                return float4(saturate(-tmp), 0,0,1);
+                
+                // return float4(WorldNormal * 0.5 + 0.5,1);
 
                 // Color
                 float4 pulse = tex2D(_MainTex, pulseUV) * _PulseColor;

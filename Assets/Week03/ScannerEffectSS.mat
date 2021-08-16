@@ -20,21 +20,28 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 8bfd08a85144adf4fa8748af76c4c076, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2faf9e89557980949ac6cc98515f17f4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _DepthTexture: 0
-    - _DstBlend: 10
-    - _EdgeSize: 1
+    - _DstBlend: 6
+    - _EdgeSize: 0.3
     - _EdgeSoftless: 1
+    - _FallOff: 26.6
+    - _FallOffDistance: 40
     - _FlipColor: 0
-    - _Margin: 0
+    - _Margin: 11.9
     - _MaxRange: 60
     - _MinRange: 40
-    - _Radius: 0
+    - _Radius: 5
+    - _ScanDistance: 20
     - _SrcBlend: 5
+    - _fallOffDistance: 60
+    - _fallOffDistanceDistance: 60
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Origin: {r: 0, g: 0, b: 0, a: 0}
+    - _DimColor: {r: 0.44304025, g: 0.4998028, b: 0.7169812, a: 1}
+    - _Origin: {r: -49.72, g: 9.67, b: -28.02, a: 0}
+    - _PulseColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

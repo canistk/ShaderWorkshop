@@ -8,12 +8,12 @@ public class MyPostProcessRendererFeature : ScriptableRendererFeature
 {
 	public override void Create()
 	{
-		//		Debug.Log("MyPostProcessManager.RendererFeature.Create");
+		// Debug.Log("MyPostProcessManager.RendererFeature.Create");
 	}
 
 	public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
 	{
-		//		Debug.Log("MyPostProcessManager.RendererFeature.AddRenderPasses");
+		//Debug.Log("MyPostProcessManager.RendererFeature.AddRenderPasses");
 		var mgr = MyPostProcessManager.instance;
 		if (mgr == null) return;
 		mgr.AddRenderPasses(renderer, ref renderingData);

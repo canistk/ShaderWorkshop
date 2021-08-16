@@ -19,37 +19,37 @@ Shader "Kit/Universal Render Pipeline/ScannerEffect"
         [Enum(UnityEngine.Rendering.BlendMode)]_DstBlend("_DstBlend (default = OneMinusSrcAlpha)", Float) = 10 // 10 = OneMinusSrcAlpha
     }
 
-        // The SubShader block containing the Shader code. 
-            SubShader
+    // The SubShader block containing the Shader code. 
+    SubShader
+    {
+        // SubShader Tags define when and under which conditions a SubShader block or
+        // a pass is executed.
+        // https://docs.unity3d.com/Manual/SL-SubShaderTags.html
+        Tags {
+            "RenderType" = "Transparent"
+            "RenderPipeline" = "UniversalRenderPipeline"
+            "Queue" = "Transparent"
+            "ForceNoShadowCasting" = "True"
+            "IgnoreProjector" = "True"
+            "PreviewType" = "Plane"
+            "DisableBatching" = "True"
+        }
+        LOD 100
+        ZWrite on
+        // ZTest Always
+        Cull Off
+        // https://docs.unity3d.com/Manual/SL-Blend.html
+        Blend[_SrcBlend][_DstBlend]
+        Pass
         {
-            // SubShader Tags define when and under which conditions a SubShader block or
-            // a pass is executed.
-            // https://docs.unity3d.com/Manual/SL-SubShaderTags.html
+            Name "Overlay"
             Tags {
-                "RenderType" = "Transparent"
-                "RenderPipeline" = "UniversalRenderPipeline"
-                "Queue" = "Transparent"
-                "ForceNoShadowCasting" = "True"
-                "IgnoreProjector" = "True"
-                "PreviewType" = "Plane"
-                "DisableBatching" = "True"
+                "LightMode" = "SRPDefaultUnlit"
             }
-            LOD 100
-            ZWrite on
-            // ZTest Always
-            Cull Off
-            // https://docs.unity3d.com/Manual/SL-Blend.html
-            Blend[_SrcBlend][_DstBlend]
-            Pass
-            {
-                Name "Overlay"
-                Tags {
-                    "LightMode" = "SRPDefaultUnlit"
-                }
-                HLSLPROGRAM
-                #pragma vertex vert
-                #pragma fragment frag
-                #pragma multi_compile_fog
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fog
 
             // due to using ddx() & ddy()
             #pragma target 3.0
@@ -163,7 +163,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffect"
                 float4x4 ViewToObjectMatrix = mul(UNITY_MATRIX_I_M, UNITY_MATRIX_I_V);
                 // transform everything to object space(decal space) in vertex shader first, so we can skip all matrix mul() in fragment shader
                 OUT.viewRayOS.xyz = mul((float3x3)ViewToObjectMatrix, viewRay);
-                OUT.cameraPosOS.xyz = mul(ViewToObjectMatrix, float4(0,0,0,1)).xyz;
+                OUT.cameraPosOS = mul(ViewToObjectMatrix, float4(0,0,0,1));
                 // hard code 0 or 1 can enable many compiler optimization
 
                 // To support VR ?
@@ -211,7 +211,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffect"
                 //float selfDepth = IN.positionCS.z;// / IN.positionCS.w;
                 //float3 selfPos = ComputeWorldSpacePosition(screenUV, selfDepth, UNITY_MATRIX_I_VP);
 
-                float3 forward = worldPos - _Origin;
+                float3 forward = worldPos - _Origin.xyz;
                 float distance = length(forward);
                 
                 // Hard edge

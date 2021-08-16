@@ -13,7 +13,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
         _EdgeSize ("EdgeSize", float) = 0.3
         _ScanDistance("Scanable distance", float) = 10
         _fallOffDistance("Fall off distance", float) = 20
-        _unity_ProjectionToWorld("Camera Matrix", float4x4)
+        // _unity_ProjectionToWorld("Camera Matrix", float4x4) = ((0,0,0,0),(0,0,0,0),(0,0,0,0),(0,0,0,0))
 
         [Header(Blending)]
         // https://docs.unity3d.com/ScriptReference/Rendering.BlendMode.html
@@ -66,6 +66,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 float           _EdgeSize;
                 float           _ScanDistance;
                 float           _fallOffDistance;
+                float4x4        _unity_ProjectionToWorld;
             CBUFFER_END
 
             struct Attributes
@@ -121,6 +122,14 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 return OUT;
             }
 
+            float3 GetWorldPos(float2 screenUV)
+            {
+                real depth = GetSceneDepth(screenUV);
+                // Reconstruct the world space positions.
+                float3 worldPos = ComputeWorldSpacePosition(screenUV, depth, UNITY_MATRIX_I_VP);
+                return worldPos;
+            }
+
             // The fragment shader definition.            
             float4 frag(Varyings IN) : SV_Target
             {
@@ -155,10 +164,37 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 if (alpha < 0.0001)
                     discard; // why we had inverse color.
 
+                // Try reconstruct normal - SO EXPENSIVE !!
+                // ref : https://forum.unity.com/threads/world-normal-from-scene-depth.1063625/
+                // get view space position at 1 pixel offsets in each major direction
+                float di = 1.0;
+                float3 wsPos_l = GetWorldPos(screenUV + float2(-di, 0.0));
+                float3 wsPos_r = GetWorldPos(screenUV + float2( di, 0.0));
+                float3 wsPos_d = GetWorldPos(screenUV + float2( 0.0,-di));
+                float3 wsPos_u = GetWorldPos(screenUV + float2( 0.0, di));
+ 
+                // get the difference between the current and each offset position
+                float3 l = worldPos - wsPos_l;
+                float3 r = wsPos_r - worldPos;
+                float3 d = worldPos - wsPos_d;
+                float3 u = wsPos_u - worldPos;
+ 
+                // pick horizontal and vertical diff with the smallest z difference
+                float3 h = length(l) < length(r) ? l : r;
+                float3 v = length(d) < length(u) ? d : u;
+ 
+                // get view space normal from the cross product of the two smallest offsets
+                float3 viewNormal = normalize(cross(h, v));
+ 
+                // transform normal from view space to world space
+                float3 WorldNormal = mul((float3x3)UNITY_MATRIX_VP, viewNormal);
+                float tmp = dot(WorldNormal, mul((float3x3)UNITY_MATRIX_VP,float3(0,0,1)));
+                return float4(saturate(-tmp), 0,0,1);
+
                 // Color
                 float4 pulse = tex2D(_MainTex, pulseUV) * _PulseColor;
                 float4 dim = tex2D(_MainTex, staticUV) * _DimColor;
-                float3 combie = saturate(dim + pulse * pulseAlpha);
+                float3 combie = saturate(dim.rgb + pulse.rgb * pulseAlpha);
 
                 return float4(combie, alpha);
             }

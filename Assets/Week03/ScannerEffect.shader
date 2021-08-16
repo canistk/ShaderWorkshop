@@ -95,6 +95,17 @@ Shader "Kit/Universal Render Pipeline/ScannerEffect"
                 float4 cameraPosOS  : TEXCOORD2;
             };
 
+            float4 invLerp(float4 from, float4 to, float4 value)
+            {
+                return (value - from) / (to - from);
+            }
+
+            float4 remap(float4 origFrom, float4 origTo, float4 targetFrom, float4 targetTo, float4 value)
+            {
+                float4 rel = invLerp(origFrom, origTo, value);
+                return lerp(targetFrom, targetTo, rel);
+            }
+
             real GetSceneDepth(float2 screenUV)
             {
                 // Sample the depth from the Camera depth texture.

@@ -126,11 +126,11 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 return worldPos;
             }
 
-            float GetViewSpaceDepth(float2 screenUV)
+            float3 GetViewPos(float2 screenUV)
             {
                 float depth = GetSceneDepth(screenUV);
                 float3 viewPos = ComputeViewSpacePosition(screenUV, depth, UNITY_MATRIX_I_P);
-                return viewPos.z;
+                return viewPos;
             }
 
             // Sobel Edge
@@ -140,11 +140,11 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 // get view space position at certain pixel offsets in each major direction
                 float3 offset = float3(1.0 / _ScreenParams.x, 1.0 / _ScreenParams.y, 0.0) * thickness;
 
-                float pos_c = GetViewSpaceDepth(screenUV);
-                float pos_l = GetViewSpaceDepth(screenUV - offset.xz);
-                float pos_r = GetViewSpaceDepth(screenUV + offset.xz);
-                float pos_d = GetViewSpaceDepth(screenUV + offset.zy);
-                float pos_u = GetViewSpaceDepth(screenUV - offset.zy);
+                float pos_c = GetViewPos(screenUV).z;
+                float pos_l = GetViewPos(screenUV - offset.xz).z;
+                float pos_r = GetViewPos(screenUV + offset.xz).z;
+                float pos_d = GetViewPos(screenUV + offset.zy).z;
+                float pos_u = GetViewPos(screenUV - offset.zy).z;
  
                 // get the difference between the current and each offset position
                 float u = abs(pos_u - pos_c);
@@ -155,6 +155,29 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 // calculate sobel difference.
                 float sobelDepth = pow(abs((u+d+l+r) * multiplier), abs(bias));
                 return sobelDepth;
+            }
+
+            float3 SobelNormal(float2 screenUV, float thickness, float multiplier, float bias)
+            {
+                // get view space position at certain pixel offsets in each major direction
+                float3 offset = float3(1.0 / _ScreenParams.x, 1.0 / _ScreenParams.y, 0.0) * thickness;
+
+                float3 pos_c = GetViewPos(screenUV);
+                float3 pos_l = GetViewPos(screenUV - offset.xz);
+                float3 pos_r = GetViewPos(screenUV + offset.xz);
+                float3 pos_d = GetViewPos(screenUV + offset.zy);
+                float3 pos_u = GetViewPos(screenUV - offset.zy);
+ 
+                // get the difference between the current and each offset position
+                float3 u = abs(pos_u - pos_c);
+                float3 d = abs(pos_d - pos_c);
+                float3 l = abs(pos_l - pos_c);
+                float3 r = abs(pos_r - pos_c);
+
+                return u+d+l+r;
+                // calculate sobel difference.
+                //float sobelDepth = pow(abs((u+d+l+r) * multiplier), abs(bias));
+                //return sobelDepth;
             }
 
             // The fragment shader definition.            
@@ -182,7 +205,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 float2 staticUV = float2(invLerp(minRadius, maxRadius, max(0, distance + level)), y) * _MainTex_ST.xy + _MainTex_ST.zw;
                 
                 // Alpha
-                float staticAlpha = saturate((maxRadius - distance) / maxRadius);
+                float staticAlpha = saturate((_Margin - distance) / _Margin);
                 float pulseAlpha = frac(pulseU);
                 float scanableDistance = 1 - smoothstep(_ScanDistance - _Radius, _ScanDistance, distance);
                 float fallOffDistance = 1 - smoothstep(_ScanDistance - _Radius, max(_ScanDistance, _fallOffDistance), _Margin);
@@ -192,6 +215,8 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                     discard; // why we had inverse color.
  
                 float sobelDepth = SobelDepth(screenUV, _OutlineThickness, _OutlineDepthMultiplier, _OutlineDepthBias);
+                //float3 sobelNormal = SobelNormal(screenUV, _OutlineThickness, _OutlineDepthMultiplier, _OutlineDepthBias);
+                //return float4(sobelNormal, 1);
 
                 // Color
                 float4 pulse = tex2D(_MainTex, pulseUV) * _PulseColor;

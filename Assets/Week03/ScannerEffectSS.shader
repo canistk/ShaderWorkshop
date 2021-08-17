@@ -6,14 +6,20 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
         [HDR]_PulseColor("Pulse Color", color) = (1,1,1,1)
         _DimColor("Dim Color", color) = (1,1,1,1)
         
-
+        [Decal]
         _Origin("Origin Point of scanner", vector) = (0,0,0,0)
         _Margin("Margin", float) = 0
         _Radius("Min radius", float) = 5
         _EdgeSize ("EdgeSize", float) = 0.3
         _ScanDistance("Scanable distance", float) = 10
         _fallOffDistance("Fall off distance", float) = 20
-        // _unity_ProjectionToWorld("Camera Matrix", float4x4) = ((0,0,0,0),(0,0,0,0),(0,0,0,0),(0,0,0,0))
+
+        [Header(outline)]
+        _OutlineThickness ("Outline Thickness", float) = 1
+        _OutlineDepthMultiplier ("Outline Depth Multiplier", float) = 1
+        _OutlineDepthBias ("Outline Depth Bias", float) = 1
+        _OutlineNormalMultiplier ("Outline Depth Bias", float) = 1
+        _OutlineNormalBias ("Outline Normal Bias", float) = 1
 
         [Header(Blending)]
         // https://docs.unity3d.com/ScriptReference/Rendering.BlendMode.html
@@ -41,8 +47,8 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
             #pragma vertex vert
             #pragma fragment frag
 
-            // due to using ddx() & ddy()
-            #pragma target 3.0
+            // due to sampler
+            #pragma target 3.5
 
             // The Core.hlsl file contains definitions of frequently used HLSL
             // macros and functions, and also contains #include references to other
@@ -61,11 +67,20 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 float4          _PulseColor;
                 float4          _DimColor;
                 float4          _Origin;
+
                 float           _Margin;
                 float           _Radius;
                 float           _EdgeSize;
                 float           _ScanDistance;
+
                 float           _fallOffDistance;
+                float           _OutlineThickness;
+                float           _OutlineDepthMultiplier;
+                float           _OutlineDepthBias;
+
+                float           _OutlineNormalMultiplier;
+                float           _OutlineNormalBias;
+
                 float4x4        _unity_ProjectionToWorld;
             CBUFFER_END
 
@@ -130,6 +145,13 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 return worldPos;
             }
 
+            float3 GetViewPos(float2 screenUV)
+            {
+                real depth = GetSceneDepth(screenUV);
+                float3 viewPos = ComputeViewSpacePosition(screenUV, depth, UNITY_MATRIX_I_P);
+                return viewPos;
+            }
+
             // The fragment shader definition.            
             float4 frag(Varyings IN) : SV_Target
             {
@@ -164,32 +186,35 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 if (alpha < 0.0001)
                     discard; // why we had inverse color.
 
+                /****
                 // Try reconstruct normal - SO EXPENSIVE !!
                 // ref : https://forum.unity.com/threads/world-normal-from-scene-depth.1063625/
                 // get view space position at 1 pixel offsets in each major direction
                 float di = 1.0;
-                float3 wsPos_l = GetWorldPos(screenUV + float2(-di, 0.0));
-                float3 wsPos_r = GetWorldPos(screenUV + float2( di, 0.0));
-                float3 wsPos_d = GetWorldPos(screenUV + float2( 0.0,-di));
-                float3 wsPos_u = GetWorldPos(screenUV + float2( 0.0, di));
+                float3 pos_c = GetViewPos(screenUV);
+                float3 pos_l = GetViewPos(screenUV + float2(-di, 0.0));
+                float3 pos_r = GetViewPos(screenUV + float2( di, 0.0));
+                float3 pos_d = GetViewPos(screenUV + float2( 0.0,-di));
+                float3 pos_u = GetViewPos(screenUV + float2( 0.0, di));
  
                 // get the difference between the current and each offset position
-                float3 l = worldPos - wsPos_l;
-                float3 r = wsPos_r - worldPos;
-                float3 d = worldPos - wsPos_d;
-                float3 u = wsPos_u - worldPos;
+                float3 l = pos_c - pos_l;
+                float3 r = pos_r - pos_c;
+                float3 d = pos_c - pos_d;
+                float3 u = pos_u - pos_c;
  
                 // pick horizontal and vertical diff with the smallest z difference
-                float3 h = length(l) < length(r) ? l : r;
-                float3 v = length(d) < length(u) ? d : u;
+                float3 h = abs(l.z) < abs(r.z) ? l : r;
+                float3 v = abs(d.z) < abs(u.z) ? d : u;
  
                 // get view space normal from the cross product of the two smallest offsets
                 float3 viewNormal = normalize(cross(h, v));
  
                 // transform normal from view space to world space
-                float3 WorldNormal = mul((float3x3)UNITY_MATRIX_VP, viewNormal);
-                
-                // return float4(WorldNormal * 0.5 + 0.5,1);
+                // float3 WorldNormal = mul((float3x3)_unity_ProjectionToWorld, viewNormal);
+                float3 WorldNormal = mul((float3x3)unity_MatrixInvV, viewNormal);
+                ****/
+                // return float4(WorldNormal.xyz * 0.5 + 0.5, 1);
 
                 // Color
                 float4 pulse = tex2D(_MainTex, pulseUV) * _PulseColor;

@@ -4,7 +4,8 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
     {
         _MainTex("Texture", 2D) = "white" {}
         [HDR]_PulseColor("Pulse Color", color) = (1,1,1,1)
-        _DimColor("Dim Color", color) = (1,1,1,1)
+        [HDR]_DimColor("Dim Color", color) = (1,1,1,1)
+        [HDR]_HighLightColor("Hight light Color", color) = (1,1,1,1)
         
         [Decal]
         _Origin("Origin Point of scanner", vector) = (0,0,0,0)
@@ -14,12 +15,10 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
         _ScanDistance("Scanable distance", float) = 10
         _fallOffDistance("Fall off distance", float) = 20
 
-        [Header(outline)]
-        _OutlineThickness ("Outline Thickness", float) = 1
-        _OutlineDepthMultiplier ("Outline Depth Multiplier", float) = 1
-        _OutlineDepthBias ("Outline Depth Bias", float) = 1
-        _OutlineNormalMultiplier ("Outline Depth Bias", float) = 1
-        _OutlineNormalBias ("Outline Normal Bias", float) = 1
+        [Header(Sobel Edge)]
+        _OutlineThickness ("Outline Thickness", float) = 3
+        _OutlineDepthMultiplier ("Outline Depth Multiplier", float) = 0.15
+        _OutlineDepthBias ("Outline Depth Bias", float) = 2
 
         [Header(Blending)]
         // https://docs.unity3d.com/ScriptReference/Rendering.BlendMode.html
@@ -66,6 +65,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 float4          _MainTex_ST;
                 float4          _PulseColor;
                 float4          _DimColor;
+                float4          _HighLightColor;
                 float4          _Origin;
 
                 float           _Margin;
@@ -77,11 +77,6 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 float           _OutlineThickness;
                 float           _OutlineDepthMultiplier;
                 float           _OutlineDepthBias;
-
-                float           _OutlineNormalMultiplier;
-                float           _OutlineNormalBias;
-
-                float4x4        _unity_ProjectionToWorld;
             CBUFFER_END
 
             struct Attributes
@@ -91,7 +86,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
 
             struct Varyings
             {
-                float4 positionHCS   : SV_POSITION;
+                float4 positionHCS  : SV_POSITION;
             };
 
             float invLerp(float from, float to, float value)
@@ -99,31 +94,17 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 return (value - from) / (to - from);
             }
 
-            real GetSceneDepth(float2 screenUV)
+            float GetSceneDepth(float2 screenUV)
             {
                 // Sample the depth from the Camera depth texture.
                 // Reconstruct the world space positions.
 #if UNITY_REVERSED_Z
-                real depth = SampleSceneDepth(screenUV);
+                float depth = SampleSceneDepth(screenUV);
 #else
                 // Adjust z to match NDC for OpenGL
-                real depth = lerp(UNITY_NEAR_CLIP_VALUE, 1, SampleSceneDepth(screenUV));
+                float depth = lerp(UNITY_NEAR_CLIP_VALUE, 1, SampleSceneDepth(screenUV));
 #endif
                 return depth;
-            }
-
-            half4 GenDebugDepth(real depth, float2 screenUV)
-            {
-                float3 worldPos = ComputeWorldSpacePosition(screenUV, depth, UNITY_MATRIX_I_VP);
-                // The following part creates the checkerboard effect.
-                // Scale is the inverse size of the squares.
-                uint scale = 1;
-                // Scale, mirror and snap the coordinates.
-                uint3 worldIntPos = uint3(abs(worldPos.xyz * scale));
-                // Divide the surface into squares. Calculate the color ID value.
-                bool white = ((worldIntPos.x) & 1) ^ (worldIntPos.y & 1) ^ (worldIntPos.z & 1);
-                // Color the square based on the ID value (black or white).
-                return white ? half4(1, 1, 1, 1) : half4(.1, .1, .1, 1);
             }
 
             // The vertex shader definition with properties defined in the Varyings 
@@ -139,17 +120,41 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
 
             float3 GetWorldPos(float2 screenUV)
             {
-                real depth = GetSceneDepth(screenUV);
+                float depth = GetSceneDepth(screenUV);
                 // Reconstruct the world space positions.
                 float3 worldPos = ComputeWorldSpacePosition(screenUV, depth, UNITY_MATRIX_I_VP);
                 return worldPos;
             }
 
-            float3 GetViewPos(float2 screenUV)
+            float GetViewSpaceDepth(float2 screenUV)
             {
-                real depth = GetSceneDepth(screenUV);
+                float depth = GetSceneDepth(screenUV);
                 float3 viewPos = ComputeViewSpacePosition(screenUV, depth, UNITY_MATRIX_I_P);
-                return viewPos;
+                return viewPos.z;
+            }
+
+            // Sobel Edge
+            // ref : https://www.vertexfragment.com/ramblings/unity-postprocessing-sobel-outline/
+            float SobelDepth(float2 screenUV, float thickness, float multiplier, float bias)
+            {
+                // get view space position at certain pixel offsets in each major direction
+                float3 offset = float3(1.0 / _ScreenParams.x, 1.0 / _ScreenParams.y, 0.0) * thickness;
+
+                float pos_c = GetViewSpaceDepth(screenUV);
+                float pos_l = GetViewSpaceDepth(screenUV - offset.xz);
+                float pos_r = GetViewSpaceDepth(screenUV + offset.xz);
+                float pos_d = GetViewSpaceDepth(screenUV + offset.zy);
+                float pos_u = GetViewSpaceDepth(screenUV - offset.zy);
+ 
+                // get the difference between the current and each offset position
+                float u = abs(pos_u - pos_c);
+                float d = abs(pos_d - pos_c);
+                float l = abs(pos_l - pos_c);
+                float r = abs(pos_r - pos_c);
+
+                // calculate sobel difference.
+                float sobelDepth = pow(abs((u+d+l+r) * multiplier), abs(bias));
+                return sobelDepth;
             }
 
             // The fragment shader definition.            
@@ -159,7 +164,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                     discard;
                 float2 screenUV = IN.positionHCS.xy / _ScaledScreenParams.xy;
 
-                real depth = GetSceneDepth(screenUV);
+                float depth = GetSceneDepth(screenUV);
 
                 // Reconstruct the world space positions.
                 float3 worldPos = ComputeWorldSpacePosition(screenUV, depth, UNITY_MATRIX_I_VP);
@@ -182,45 +187,19 @@ Shader "Kit/Universal Render Pipeline/ScannerEffectSS"
                 float scanableDistance = 1 - smoothstep(_ScanDistance - _Radius, _ScanDistance, distance);
                 float fallOffDistance = 1 - smoothstep(_ScanDistance - _Radius, max(_ScanDistance, _fallOffDistance), _Margin);
                 float fadeInnerCircle = smoothstep(_Radius - _EdgeSize, _Radius, distance);
-                float alpha = fadeInnerCircle * scanableDistance* fallOffDistance * saturate(staticAlpha + pulseAlpha);
+                float alpha = fadeInnerCircle * scanableDistance * fallOffDistance * saturate(staticAlpha + pulseAlpha);
                 if (alpha < 0.0001)
                     discard; // why we had inverse color.
-
-                /****
-                // Try reconstruct normal - SO EXPENSIVE !!
-                // ref : https://forum.unity.com/threads/world-normal-from-scene-depth.1063625/
-                // get view space position at 1 pixel offsets in each major direction
-                float di = 1.0;
-                float3 pos_c = GetViewPos(screenUV);
-                float3 pos_l = GetViewPos(screenUV + float2(-di, 0.0));
-                float3 pos_r = GetViewPos(screenUV + float2( di, 0.0));
-                float3 pos_d = GetViewPos(screenUV + float2( 0.0,-di));
-                float3 pos_u = GetViewPos(screenUV + float2( 0.0, di));
  
-                // get the difference between the current and each offset position
-                float3 l = pos_c - pos_l;
-                float3 r = pos_r - pos_c;
-                float3 d = pos_c - pos_d;
-                float3 u = pos_u - pos_c;
- 
-                // pick horizontal and vertical diff with the smallest z difference
-                float3 h = abs(l.z) < abs(r.z) ? l : r;
-                float3 v = abs(d.z) < abs(u.z) ? d : u;
- 
-                // get view space normal from the cross product of the two smallest offsets
-                float3 viewNormal = normalize(cross(h, v));
- 
-                // transform normal from view space to world space
-                // float3 WorldNormal = mul((float3x3)_unity_ProjectionToWorld, viewNormal);
-                float3 WorldNormal = mul((float3x3)unity_MatrixInvV, viewNormal);
-                ****/
-                // return float4(WorldNormal.xyz * 0.5 + 0.5, 1);
+                float sobelDepth = SobelDepth(screenUV, _OutlineThickness, _OutlineDepthMultiplier, _OutlineDepthBias);
 
                 // Color
                 float4 pulse = tex2D(_MainTex, pulseUV) * _PulseColor;
                 float4 dim = tex2D(_MainTex, staticUV) * _DimColor;
-                float3 combie = saturate(dim.rgb + pulse.rgb * pulseAlpha);
-
+                float4 highLight = sobelDepth * _HighLightColor;
+                // return float4(highLight.rgb,1);
+                float3 combie = saturate(dim.rgb + highLight.rgb + pulse.rgb * pulseAlpha);
+                
                 return float4(combie, alpha);
             }
             ENDHLSL

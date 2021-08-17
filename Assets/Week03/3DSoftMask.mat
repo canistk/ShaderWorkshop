@@ -32,7 +32,7 @@ Material:
     - _MapAngle: 1
     - _Mapangle: 0
     - _Margin: 0
-    - _MaxRange: 80
+    - _MaxRange: 2.77
     - _MinRange: 0
     - _OpaqueTexture: 0
     - _Padding: 0
@@ -44,7 +44,7 @@ Material:
     - _ZWrite: 1
     - _frequency: 1
     m_Colors:
-    - _Color: {r: 0.14150941, g: 0.12614872, b: 0.06207724, a: 1}
+    - _Color: {r: 0.023534775, g: 0.31764707, b: 1, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &6978655196692626494
 MonoBehaviour:

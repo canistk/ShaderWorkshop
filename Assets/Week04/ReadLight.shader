@@ -16,8 +16,6 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
             "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalPipeline"
             "UniversalMaterialType" = "Lit"
-            
-            "ShaderModel" = "4.5"
         }
         LOD 300
 
@@ -30,7 +28,7 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma multi_compile_fog
+            //#pragma multi_compile_fog
 
             // due to using ddx() & ddy()
             // #pragma target 3.0
@@ -68,7 +66,7 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 float4  tangentOS   : TANGENT;
                 float2  uv          : TEXCOORD0;
                 // float2  lightmapUV  : TEXCOORD1;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
+                //UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
@@ -77,9 +75,9 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 //DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 1);
                 float3 positionWS               : TEXCOORD2;
                 half3 normalWS                  : TEXCOORD3;
-                half3 viewDirWS                 : TEXCOORD4;
-                half4 fogFactorAndVertexLight   : TEXCOORD6; // x: fogFactor, yzw: vertex light
-                float4 shadowCoord              : TEXCOORD7;
+                //half3 viewDirWS                 : TEXCOORD4;
+                //half4 fogFactorAndVertexLight   : TEXCOORD6; // x: fogFactor, yzw: vertex light
+                //float4 shadowCoord              : TEXCOORD7;
                 float4 positionCS               : SV_POSITION;
                 //UNITY_VERTEX_INPUT_INSTANCE_ID
                 //UNITY_VERTEX_OUTPUT_STEREO
@@ -163,10 +161,10 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
 
                 OUT.uv = IN.uv;
                 OUT.normalWS = normalInput.normalWS;
-                OUT.viewDirWS = viewDirWS;
-                OUT.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
+                //OUT.viewDirWS = viewDirWS;
+                //OUT.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
                 OUT.positionWS = vertexInput.positionWS;
-                OUT.shadowCoord = GetShadowCoord(vertexInput);
+                //OUT.shadowCoord = GetShadowCoord(vertexInput);
                 OUT.positionCS = vertexInput.positionCS;
                 return OUT;
             }

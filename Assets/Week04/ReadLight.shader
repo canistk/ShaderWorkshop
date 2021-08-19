@@ -155,9 +155,9 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(IN.positionOS.xyz);
                 VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangentOS);
-                half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS; // calculate here cheaper then fragment shader.
-                half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
-                half fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+                //half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS; // calculate here cheaper then fragment shader.
+                //half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
+                //half fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
 
                 OUT.uv = IN.uv;
                 OUT.normalWS = normalInput.normalWS;
@@ -174,7 +174,7 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 float4 texColor = tex2D(_MainTex, IN.uv * _MainTex_ST.xy + _MainTex_ST.zw);
                 float4 orgColor = texColor * _Color;
 
-                half3 col = CalcBlinnPhong(GetMainLight(), orgColor, IN.normalWS);
+                half3 col = CalcBlinnPhong(GetMainLight(), orgColor.rgb, IN.normalWS);
                 
                 int cnt = 8; // GetAdditionalLightsCount();
                 for (int i=0; i<cnt; i++)
@@ -186,7 +186,7 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                     //half3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
                     //half attenuation = half(DistanceAttenuation(distanceSqr, distanceAndSpotAttenuation.xy) * AngleAttenuation(spotDirection.xyz, lightDirection, distanceAndSpotAttenuation.zw));
                     Light light = GetAdditionalPerObjectLight(i, IN.positionWS);
-                    col.rgb += CalcBlinnPhong(light, orgColor, IN.normalWS);
+                    col.rgb += CalcBlinnPhong(light, orgColor.rgb, IN.normalWS);
                 }
                 return float4(col, 1);
             }

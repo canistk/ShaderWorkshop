@@ -1,4 +1,4 @@
-Shader "Kit/Universal Render Pipeline/URPUnlitShaderTransparent"
+Shader "Kit/Universal Render Pipeline/Tools/Stencil Viewer"
 {
     Properties
     {

@@ -2,6 +2,7 @@ Shader "Kit/Universal Render Pipeline/URPUnlitShaderTransparent"
 {
     Properties
     {
+        _BgColor("Background", color) = (0.0,0.0,0.0,0.5)
         _Color("Debug Color", color) = (0.0,1.0,0.0,1.0)
 
         //====================================== below = usually can ignore in normal use case =====================================================================
@@ -49,27 +50,7 @@ Shader "Kit/Universal Render Pipeline/URPUnlitShaderTransparent"
             ZTest LEqual
             ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
-
-            HLSLPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-            };   
-            Varyings vert(float4 positionOS : POSITION)
-            {
-                Varyings OUT;
-                VertexPositionInputs vertexPositionInput = GetVertexPositionInputs(positionOS.xyz);
-                OUT.positionCS = vertexPositionInput.positionCS;
-                return OUT;
-            }
-            float4 frag(Varyings IN) : SV_Target
-            {
-                return float4(0,0,0,0.5);
-            }
-            ENDHLSL
+            Color[_BgColor]
         }
         Pass
         {
@@ -91,54 +72,7 @@ Shader "Kit/Universal Render Pipeline/URPUnlitShaderTransparent"
             Cull Off
             ZTest Always
             ZWrite Off
-
-            // https://docs.unity3d.com/Manual/shader-shaderlab-commands.html
-            HLSLPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-
-            // due to using ddx() & ddy()
-            #pragma target 3.0
-
-            // The Core.hlsl file contains definitions of frequently used HLSL
-            // macros and functions, and also contains #include references to other
-            // HLSL files (for example, Common.hlsl, SpaceTransforms.hlsl, etc.).
-            // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-
-            CBUFFER_START(UnityPerMaterial)
-                half4 _Color;
-            CBUFFER_END
-
-            // The structure definition defines which variables it contains.
-            // This example uses the Attributes structure as an input structure in
-            // the vertex shader.
-            struct Attributes
-            {
-                // The positionOS variable contains the vertex positions in object
-                // space.
-                float4 positionOS : POSITION;
-            };
-
-            struct Varyings
-            {
-                // The positions in this struct must have the SV_POSITION semantic.
-                float4 positionCS : SV_POSITION;
-            };            
-
-            Varyings vert(Attributes IN)
-            {
-                Varyings OUT;
-                VertexPositionInputs vertexPositionInput = GetVertexPositionInputs(IN.positionOS.xyz);
-                OUT.positionCS = vertexPositionInput.positionCS;
-                return OUT;
-            }
-         
-            float4 frag(Varyings IN) : SV_Target
-            {
-                return _Color;
-            }
-            ENDHLSL
+            Color[_Color]
         }
     }
 }

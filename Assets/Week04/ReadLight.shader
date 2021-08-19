@@ -5,13 +5,11 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
         _MainTex("Texture", 2D) = "white" {}
         _Color("Color", color) = (0.5,0.5,0.5,0.5)
         [IntRange]_MaxLightSrc("Max light source", Range(0,8)) = 0
+        [Toggle] _DebugShadow("Debug shadow", int) = 0
     }
 
-    // The SubShader block containing the Shader code. 
     SubShader
     {
-        // SubShader Tags define when and under which conditions a SubShader block or
-        // a pass is executed.
         // https://docs.unity3d.com/Manual/SL-SubShaderTags.html
         Tags {
             "RenderType" = "Opaque"
@@ -33,13 +31,15 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
             #pragma multi_compile_instancing
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile _ _SHADOWS_SOFT
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile_fwdadd_fullshadows
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile _ _RECEIVE_SHADOWS_OFF
+            #pragma multi_compile _ SHADOWS_SHADOWMASK
             //#pragma multi_compile_fog
-
-            // due to using ddx() & ddy()
             // #pragma target 3.0
 
             // The Core.hlsl file contains definitions of frequently used HLSL
@@ -49,14 +49,11 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl
             // #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-            
-            
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+            //#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl
             // #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
-
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl
             // #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl
@@ -67,6 +64,7 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 float4          _MainTex_ST;
                 float4          _Color;
                 float           _MaxLightSrc;
+                int             _DebugShadow;
             CBUFFER_END
 
             struct Attributes
@@ -85,69 +83,26 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 //DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 1);
                 float3 positionWS               : TEXCOORD2;
                 half3 normalWS                  : TEXCOORD3;
-                half3 viewDirWS                 : TEXCOORD4;
-                half4 fogFactorAndVertexLight   : TEXCOORD6; // x: fogFactor, yzw: vertex light
-                float4 shadowCoord              : TEXCOORD7;
+                // half3 viewDirWS                 : TEXCOORD4;
+                // half4 fogFactorAndVertexLight   : TEXCOORD6; // x: fogFactor, yzw: vertex light
+                // float4 shadowCoord              : TEXCOORD7;
                 float4 positionCS               : SV_POSITION;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
             //**
-            // InputData.hlsl, https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl
-            InputData CustomInputData(Varyings IN)
-            {
-                InputData OUT;
-                OUT.positionWS = IN.positionWS;
-                // OUT.positionCS = IN.positionCS;
-                OUT.normalWS = IN.normalWS;
-                OUT.viewDirectionWS = IN.viewDirWS;
-                OUT.shadowCoord = IN.shadowCoord;
-                OUT.fogCoord = IN.fogFactorAndVertexLight.x;
-
-                OUT.vertexLighting = 0;
-                // half3 VertexLighting(float3 positionWS, half3 normalWS)
-                // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl
-
-                OUT.bakedGI = 0;
-                // OUT.normalizedScreenSpaceUV = float2
-                // OUT.shadowMask = half4
-                // OUT.tangentToWorld = (float3x3)UNITY_MATRIX_M;
-                return OUT;
-            }
-            /***/
-            // RealtimeLights.hlsl
-            // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl
-            //struct Light
-            //{
-            //    half3   direction;
-            //    half3   color;
-            //    half    distanceAttenuation;
-            //    half    shadowAttenuation;
-            //    uint    layerMask;
-            //};
-
-            // LitInput.hlsl > SurfaceData.hlsl
+            // InputData -> InputData.hlsl
+            // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl
+            // SurfaceData -> LitInput.hlsl > SurfaceData.hlsl
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceData.hlsl
-            //SurfaceData U3DSurface(Surface surface)
-            //{
-            //    SurfaceData OUT;
-            //    OUT.albedo = surface.color;
-            //    OUT.specular = 0;
-            //    OUT.metallic = 0;
-            //    OUT.smoothness = 0;
-            //    OUT.normalTS = surface.normal;
-            //    OUT.emission = 0;
-            //    OUT.occlusion = 0;
-            //    OUT.alpha = surface.alpha;
-            //    OUT.clearCoatMask = 0;
-            //    OUT.clearCoatSmoothness = 0;
-            //    return OUT;
-            //}
+            // Light -> Lighting.hlsl > RealtimeLights.hlsl
+            // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl
+            //**/
 
+            // Lighting.hlsl > CalculateBlinnPhong() > LightingLambert()
             half3 CalcBlinnPhong(Light light, half3 normalWS)
             {
-                // Lighting.hlsl > CalculateBlinnPhong() > LightingLambert()
                 half NdotL = saturate(dot(normalWS, light.direction));
                 half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
                 half3 lightColor = attenuatedLightColor;
@@ -156,6 +111,20 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 //lightColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normalWS, inputData.viewDirectionWS, half4(surfaceData.specular, 1), smoothness);
                 //#endif
                 return lightColor;
+            }
+
+            // Lighting.hlsl > GetAdditionalLight(uint i, float3 positionWS, half4 shadowMask)
+            half CalcAdditionalShadow(half2 uv, int lightIndex, float3 positionWS)
+            {
+                int perObjectLightIndex = GetPerObjectLightIndex(lightIndex);
+#if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
+                half4 occlusionProbeChannels = _AdditionalLightsBuffer[perObjectLightIndex].occlusionProbeChannels;
+#else
+                half4 occlusionProbeChannels = _AdditionalLightsOcclusionProbes[perObjectLightIndex];
+#endif
+                half4 shadowMask = SAMPLE_SHADOWMASK(uv);
+                half shadowAttenuation = AdditionalLightShadow(perObjectLightIndex, positionWS, shadowMask, occlusionProbeChannels);
+                return shadowAttenuation;
             }
 
             Varyings vert(Attributes IN)
@@ -172,10 +141,10 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
 
                 OUT.uv = IN.uv;
                 OUT.normalWS = normalInput.normalWS;
-                OUT.viewDirWS = viewDirWS;
-                OUT.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
+                //OUT.viewDirWS = viewDirWS;
+                //OUT.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
                 OUT.positionWS = vertexInput.positionWS;
-                OUT.shadowCoord = GetShadowCoord(vertexInput); // TransformWorldToShadowCoord(IN.positionWS)
+                // OUT.shadowCoord = GetShadowCoord(vertexInput); // TransformWorldToShadowCoord(IN.positionWS)
                 OUT.positionCS = vertexInput.positionCS;
                 return OUT;
             }
@@ -187,27 +156,55 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 float4 texColor = tex2D(_MainTex, IN.uv * _MainTex_ST.xy + _MainTex_ST.zw);
                 float4 orgColor = texColor * _Color;
                 
-                half3 lightColor = orgColor * CalcBlinnPhong(GetMainLight(IN.shadowCoord), IN.normalWS);
-                lightColor *= MainLightRealtimeShadow(IN.shadowCoord);
-
-                int cnt = _MaxLightSrc; // GetAdditionalLightsCount();
+                float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
+                half3 lightColor = orgColor * CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
+                
+                half4 addShadowDebug = half4(1,1,1,1);
+                int cnt = _MaxLightSrc; // GetAdditionalLightsCount());
                 for (int i=0; i<cnt; i++)
                 {
                     // Directional lights store direction in lightPosition.xyz and have .w set to 0.0.
                     // This way the following code will work for both directional and punctual lights.
-                    //float3 lightVector = lightPositionWS.xyz - positionWS * lightPositionWS.w;
-                    //float distanceSqr = max(dot(lightVector, lightVector), HALF_MIN);
-                    //half3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
-                    //half attenuation = half(DistanceAttenuation(distanceSqr, distanceAndSpotAttenuation.xy) * AngleAttenuation(spotDirection.xyz, lightDirection, distanceAndSpotAttenuation.zw));
                     Light light = GetAdditionalPerObjectLight(i, IN.positionWS);
+                    light.shadowAttenuation = CalcAdditionalShadow(IN.uv, i, IN.positionWS);
+                    addShadowDebug *= light.shadowAttenuation;
                     lightColor.rgb += CalcBlinnPhong(light, IN.normalWS);
                 }
-
-                return float4(lightColor.rgb, 1);
+                return (1-_DebugShadow) * float4(lightColor.rgb, 1) +
+                        (_DebugShadow) * addShadowDebug;
             }
             ENDHLSL
         }
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags{"LightMode" = "ShadowCaster"}
 
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull Back
+
+            HLSLPROGRAM
+            #pragma only_renderers gles gles3 glcore d3d11
+            #pragma target 2.0
+
+            //--------------------------------------
+            // GPU Instancing
+            #pragma multi_compile_instancing
+
+            // -------------------------------------
+            // Material Keywords
+            #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+
+            #pragma vertex ShadowPassVertex
+            #pragma fragment ShadowPassFragment
+
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/Shaders/ShadowCasterPass.hlsl"
+            ENDHLSL
+        }
         // https://illu.tistory.com/1407 + alpha test
         UsePass "Universal Render Pipeline/Lit/ShadowCaster"
     }

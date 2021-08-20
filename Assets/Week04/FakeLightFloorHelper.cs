@@ -18,8 +18,33 @@ public class FakeLightFloorHelper : MonoBehaviour
         if (m_Block == null)
             m_Block = new MaterialPropertyBlock();
 
-        // m_Block.SetVector
+        if (m_LightSrc)
+        {
+            m_Block.SetMatrix("_LightMatrixLocalToWorld", m_LightSrc.transform.localToWorldMatrix);
+            m_Block.SetMatrix("_LightMatrixWorldToLocal", m_LightSrc.transform.worldToLocalMatrix);
+            m_Block.SetColor("_LightColor", m_LightSrc.color);
+            Vector4 lightSetting = new Vector4
+            {
+                x = m_LightSrc.range,
+                y = m_LightSrc.intensity,
+                z = m_LightSrc.innerSpotAngle,
+                w = m_LightSrc.spotAngle,
+            };
+            m_Block.SetVector("_LightSetting", lightSetting);
+        }
 
         m_Renderer.SetPropertyBlock(m_Block);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Color old = Gizmos.color;
+        Matrix4x4 m = m_LightSrc.transform.localToWorldMatrix;
+        Vector3 point = m.MultiplyPoint(Vector3.zero);
+        Vector3 forward = m.MultiplyVector(Vector3.forward);
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(point, 0.2f);
+        Gizmos.DrawRay(point, forward);
+        Gizmos.color = old;
     }
 }

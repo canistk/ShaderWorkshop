@@ -4,8 +4,12 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
     {
         _MainTex("Texture", 2D) = "white" {}
         _Color("Color", color) = (0.5,0.5,0.5,0.5)
+
+        _GlassTex("Texture", 2D) = "white" {}
+
         [IntRange]_MaxLightSrc("Max light source", Range(0,8)) = 0
         [Toggle] _DebugShadow("Debug shadow", int) = 0
+        [Toggle(_ReadLight)] _ReadLight("Read Light", int) = 0
     }
 
     SubShader
@@ -39,6 +43,8 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
             #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
             #pragma multi_compile _ _RECEIVE_SHADOWS_OFF
             #pragma multi_compile _ SHADOWS_SHADOWMASK
+            
+            #pragma shader_feature_local _ReadLight
             //#pragma multi_compile_fog
             // #pragma target 3.0
 
@@ -61,8 +67,17 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
 
             CBUFFER_START(UnityPerMaterial)
                 sampler2D       _MainTex;
+                sampler2D       _GlassTex;
                 float4          _MainTex_ST;
+                float4          _GlassTex_ST;
                 float4          _Color;
+
+                float4x4        _GlassVP;
+                float4x4        _LightMatrixLocalToWorld;
+                float4x4        _LightMatrixWorldToLocal;
+                float4          _LightColor;
+                float4          _LightSetting; // x = Range, y = Intensity, z = Inner angle, w = outter angle
+
                 float           _MaxLightSrc;
                 int             _DebugShadow;
             CBUFFER_END
@@ -127,6 +142,43 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 return shadowAttenuation;
             }
 
+            Light CustomLight(float4 lightPosWS, float3 positionWS, half3 spotLightDirection, half3 color, half range, half intensity, half innerAngle, half outerAngle)
+            {
+                half rangeSqr = range * range;
+                float3 lightVector = lightPosWS.xyz - positionWS * lightPosWS.w;
+                float distanceSqr = max(dot(lightVector, lightVector), HALF_MIN);
+                half3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
+                //// Matches Unity Vanila attenuation
+                //// Attenuation smoothly decreases to light range.
+                // Directional lights store direction in lightPosition.xyz and have .w set to 0.0.
+                // This way the following code will work for both directional and punctual lights.
+
+                half lightAtten = 10.0 / length(lightPosWS.xyz - positionWS); //rcp(distanceSqr);
+                half fadeDistance = 0.8 * 0.8 * rangeSqr;
+                half smoothFactor = (rangeSqr - distanceSqr) / (rangeSqr - fadeDistance);
+                half distanceAttenuation = lightAtten * smoothFactor;
+
+                // Spot Attenuation with a linear falloff can be defined as
+                // (SdotL - cosOuterAngle) / (cosInnerAngle - cosOuterAngle)
+                half cosInnerAngle = cos(innerAngle);
+                half cosOuterAngle = cos(outerAngle);
+                half SdotL = dot(spotLightDirection, lightDirection);
+                // half invAngleRange = 1.0 / (cosInnerAngle - cosOuterAngle);
+                half invAngleRange = 1.0 / (cosOuterAngle - cosInnerAngle);
+                half AngleAtten = saturate(SdotL * invAngleRange + (-cosOuterAngle * invAngleRange));
+                half AngleAttenuation = AngleAtten * AngleAtten;
+                //half AngleAttenuation = (SdotL - cosOuterAngle) / (cosInnerAngle - cosOuterAngle);
+                
+
+                Light customLight;
+                customLight.direction = spotLightDirection;
+                customLight.color = color;
+                customLight.distanceAttenuation = distanceAttenuation * AngleAttenuation;
+                customLight.shadowAttenuation = 1.0;
+                // uint layerMask = DEFAULT_LIGHT_LAYERS;
+                return customLight;
+            }
+
             Varyings vert(Attributes IN)
             {
                 Varyings OUT;
@@ -157,8 +209,17 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 float4 orgColor = texColor * _Color;
                 
                 float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
-                half3 lightColor = orgColor * CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
+                half3 lightColor = CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
                 
+                // Fake light session
+#if _ReadLight          
+                float4 lightPosWS = mul(_LightMatrixLocalToWorld, float4(0,0,0,1));
+                float3 lightForwardWS = mul((float3x3)_LightMatrixLocalToWorld, float3(0,0,1));
+                Light fakeLight = CustomLight(lightPosWS, IN.positionWS, lightForwardWS, (half)_LightColor, _LightSetting.x, _LightSetting.y, _LightSetting.z, _LightSetting.w);
+                lightColor.rgb += CalcBlinnPhong(fakeLight, IN.normalWS);
+#endif
+                // Fake light session - End
+
                 half4 addShadowDebug = half4(1,1,1,1);
                 int cnt = _MaxLightSrc; // GetAdditionalLightsCount());
                 for (int i=0; i<cnt; i++)
@@ -170,7 +231,7 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                     addShadowDebug *= light.shadowAttenuation;
                     lightColor.rgb += CalcBlinnPhong(light, IN.normalWS);
                 }
-                return (1-_DebugShadow) * float4(lightColor.rgb, 1) +
+                return (1-_DebugShadow) * float4(lightColor.rgb * orgColor.rgb, 1) +
                         (_DebugShadow) * addShadowDebug;
             }
             ENDHLSL

@@ -76,7 +76,8 @@ Shader "hidden/Kit/Universal Render Pipeline/ShadowMapMaker"
 
             float4 frag(Varyings IN) : SV_Target
             {
-               return float4 (IN.normalWS_Depth.a, 0,0,1);
+                return float4 (0.0,0.2,0.0,1.0);
+               // return float4 (0, IN.normalWS_Depth.a, 0, 1);
             }
             ENDHLSL
         }

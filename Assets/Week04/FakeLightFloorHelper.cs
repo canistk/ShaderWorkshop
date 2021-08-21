@@ -40,9 +40,11 @@ public class FakeLightFloorHelper : MonoBehaviour
         {
             Transform glass = m_Glass.transform;
             m_Block.SetMatrix("_GlassMatrixLocalToWorld", glass.localToWorldMatrix);
+            m_Block.SetMatrix("_GlassMatrixWorldToLocal", glass.worldToLocalMatrix);
+            m_Block.SetVector("_GlassQuadScale", (Vector4) glass.lossyScale);
             var texture = m_Glass.sharedMaterial.mainTexture;
             m_Block.SetTexture("_GlassTex", texture);
-            m_Block.SetFloat("_HadGlass", 1);
+            m_Block.SetInt("_HadGlass", 1);
             //Vector2 offset = m_Glass.material.mainTextureOffset;
             //Vector2 scale = m_Glass.material.mainTextureScale;
             //Vector2 offset = m_Glass.material.GetTextureOffset("_BaseTex");
@@ -51,7 +53,7 @@ public class FakeLightFloorHelper : MonoBehaviour
         }
         else
         {
-            m_Block.SetFloat("_HadGlass", 0);
+            m_Block.SetInt("_HadGlass", 0);
         }
 
         m_Renderer.SetPropertyBlock(m_Block);

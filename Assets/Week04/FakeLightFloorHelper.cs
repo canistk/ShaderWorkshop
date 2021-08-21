@@ -20,7 +20,9 @@ public class FakeLightFloorHelper : MonoBehaviour
 
         if (m_LightSrc)
         {
-            m_Block.SetMatrix("_LightMatrixLocalToWorld", m_LightSrc.transform.localToWorldMatrix);
+            Matrix4x4 localToWorldMatrix = m_LightSrc.transform.localToWorldMatrix;
+            // if (m_LightSrc.type == LightType.Spot) { }
+            m_Block.SetMatrix("_LightMatrixLocalToWorld", localToWorldMatrix);
             m_Block.SetMatrix("_LightMatrixWorldToLocal", m_LightSrc.transform.worldToLocalMatrix);
             m_Block.SetColor("_LightColor", m_LightSrc.color);
             Vector4 lightSetting = new Vector4

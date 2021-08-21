@@ -8,8 +8,9 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
         _GlassTex("Texture", 2D) = "white" {}
 
         [IntRange]_MaxLightSrc("Max light source", Range(0,8)) = 0
-        [Toggle] _DebugShadow("Debug shadow", int) = 0
-        [Toggle(_ReadLight)] _ReadLight("Read Light", int) = 0
+        [Toggle] _DebugShadow("Debug shadow", float) = 0
+        [Toggle(_ReadLight)] _ReadLight("Read Light", float) = 0
+        [Toggle] _FlipLight("Debug Flip Light", float) = 0
     }
 
     SubShader
@@ -79,7 +80,8 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 float4          _LightSetting; // x = Range, y = Intensity, z = Inner angle, w = outter angle
 
                 float           _MaxLightSrc;
-                int             _DebugShadow;
+                float           _DebugShadow;
+                float           _FlipLight;
             CBUFFER_END
 
             struct Attributes
@@ -142,41 +144,99 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 return shadowAttenuation;
             }
 
-            Light CustomLight(float4 lightPosWS, float3 positionWS, half3 spotLightDirection, half3 color, half range, half intensity, half innerAngle, half outerAngle)
+/***
+            // http://www.kittehface.com/2020/08/
+            float DistanceAttenuation(float distanceSqr, half2 distanceAttenuation)
             {
-                half rangeSqr = range * range;
-                float3 lightVector = lightPosWS.xyz - positionWS * lightPosWS.w;
-                float distanceSqr = max(dot(lightVector, lightVector), HALF_MIN);
-                half3 lightDirection = half3(lightVector * rsqrt(distanceSqr));
-                //// Matches Unity Vanila attenuation
-                //// Attenuation smoothly decreases to light range.
-                // Directional lights store direction in lightPosition.xyz and have .w set to 0.0.
-                // This way the following code will work for both directional and punctual lights.
+                // Reconstruct the light range from the Unity shader arguments
+                float lightRangeSqr = rcp(distanceAttenuation.x);
 
-                half lightAtten = 10.0 / length(lightPosWS.xyz - positionWS); //rcp(distanceSqr);
-                half fadeDistance = 0.8 * 0.8 * rangeSqr;
-                half smoothFactor = (rangeSqr - distanceSqr) / (rangeSqr - fadeDistance);
+            #if !SHADER_HINT_NICE_QUALITY
+                lightRangeSqr = -1.0 * lightRangeSqr / 0.36;
+            #endif
+
+                // Calculate the distance attenuation to approximate the built-in Unity curve
+                return rcp(1 + 25 * distanceSqr / lightRangeSqr);
+            }
+***/
+
+            Light CustomLight(float4 lightPosWS, float3 positionWS, half3 spotLightDirection, half3 normalWS,
+                half3 color, float range, half intensity, half innerAngle, half outerAngle)
+            {
+                float3 lightVector = lightPosWS.xyz - positionWS * lightPosWS.w;
+                half distanceSqr = max(dot(lightVector, lightVector), 0.00001);
+                half3 lightDirection = half3(lightVector * rsqrt(distanceSqr)); // rsqrt(x) = 1 / sprt(x), 
+                // lightDirection can be rewrite in 
+                // lightVector * 1 / sqrt(distanceSqr)
+                // lightVector / distance,
+                // it's normalize when vector divide by it's length.
+                // as same as this > half3 lightDirection = normalize(lightVector);
+
+                
+                // Distance attenuation
+                // U3D Doc said :
+                // We use a shared distance attenuation for additional directional and puctual lights
+                // for directional lights attenuation will be 1
+                //half lightAtten = rcp(distanceSqr); // O'Really ?
+                //half lightAtten = 10.0 / length(lightPosWS.xyz - positionWS);
+                //half lightAtten = 10.0 / range;
+                //https://forum.unity.com/threads/point-light-range-is-very-low.764705/
+                // lightAtten = 1, work for realtime light, 
+                // In order to support lightmap, we need.
+                // https://docs.unity3d.com/2020.1/Documentation/Manual/ProgressiveLightmapper-CustomFallOff.html?_ga=2.97184669.388907518.1629382485-1416679152.1573397245&_gl=1*5kejq0*_ga*MTQxNjY3OTE1Mi4xNTczMzk3MjQ1*_ga_1S78EFL1W5*MTYyOTU2NTA2Mi42OS4xLjE2Mjk1NjUxNzMuMjI.
+                // https://zhuanlan.zhihu.com/p/87602137
+                // http://www.kittehface.com/2020/08/
+                // distanceAttenuation.x = assume is (r) range
+                // distanceAttenuation.y = (1.0 / (fadeDistanceSqr - lightRangeSqr))
+                // distanceAttenuation.z = (-lightRangeSqr / (fadeDistanceSqr - lightRangeSqr)
+                // distanceAttenuation.w = 1.0 // to keep spot fade calculation from affecting the other light types
+                // https://catlikecoding.com/unity/tutorials/scriptable-render-pipeline/lights/
+                half lightAtten = sqrt(distanceSqr);
+                half lightRangeSqr = max(range * range, 0.00001);
+                half fadeDistanceSqr = 0.8 * 0.8 * lightRangeSqr; // the distance to start fade
+                half fadeRangeSqr = (fadeDistanceSqr - lightRangeSqr);
+                half oneOverFadeRangeSqr = 1.0 / fadeRangeSqr;
+                half lightRangeSqrOverFadeRangeSqr = -lightRangeSqr / fadeRangeSqr;
+                half oneOverLightRangeSqr = 1.0 / lightRangeSqr;
+                
+#if SHADER_HINT_NICE_QUALITY
+                half factor = distanceSqr * oneOverLightRangeSqr; // Notes: mobile || switch should use "oneOverFadeRangeSqr" instead of "oneOverLightRangeSqr"
+                half smoothFactor = saturate(1.0h - factor * factor);
+                smoothFactor = smoothFactor * smoothFactor;
+#else
+                half smoothFactor = distanceSqr * (1.0 / fadeRangeSqr) + (-lightRangeSqr / fadeRangeSqr);
+#endif
+                smoothFactor = saturate(smoothFactor);
                 half distanceAttenuation = lightAtten * smoothFactor;
 
-                // Spot Attenuation with a linear falloff can be defined as
-                // (SdotL - cosOuterAngle) / (cosInnerAngle - cosOuterAngle)
-                half cosInnerAngle = cos(innerAngle);
-                half cosOuterAngle = cos(outerAngle);
-                half SdotL = dot(spotLightDirection, lightDirection);
-                // half invAngleRange = 1.0 / (cosInnerAngle - cosOuterAngle);
-                half invAngleRange = 1.0 / (cosOuterAngle - cosInnerAngle);
-                half AngleAtten = saturate(SdotL * invAngleRange + (-cosOuterAngle * invAngleRange));
-                half AngleAttenuation = AngleAtten * AngleAtten;
-                //half AngleAttenuation = (SdotL - cosOuterAngle) / (cosInnerAngle - cosOuterAngle);
-                
 
-                Light customLight;
-                customLight.direction = spotLightDirection;
-                customLight.color = color;
-                customLight.distanceAttenuation = distanceAttenuation * AngleAttenuation;
-                customLight.shadowAttenuation = 1.0;
+                // Spot Attenuation
+                // with a linear falloff can be defined as
+                // (SdotL - cosOuterAngle) / (cosInnerAngle - cosOuterAngle)
+                half cosInnerAngle = cos(innerAngle); // close to 1, cos angle should between 0~1, which mean 0~90 degree
+                half cosOuterAngle = cos(outerAngle); // smaller then innerAngle.
+                
+                half flipDebug = (_FlipLight - 0.5) * 2.0; // toggle -1 & 1
+                half SdotL = dot(spotLightDirection, lightDirection * flipDebug); // BUG : dirty fix by flip direction.
+                // cut off the light behind, since dot inverse vector = -1
+#if false
+                half invAngleRange = 1.0 / max(cosInnerAngle - cosOuterAngle, 0.001);
+                half AngleAtten = saturate(SdotL * invAngleRange + (-cosOuterAngle * invAngleRange));
+                half AngleAttenuation = (AngleAtten * AngleAtten);
+#else
+                half AngleAttenuation = saturate((SdotL - cosOuterAngle) / (cosInnerAngle - cosOuterAngle));
+#endif
+                
+                float diffuse = saturate(dot(normalWS, lightDirection));
+                float fallOff = diffuse / distanceSqr; // 1 / (distance * distance)
+
+                Light light;
+                light.direction = spotLightDirection;
+                light.color = color * fallOff;
+                light.distanceAttenuation = intensity * distanceAttenuation * AngleAttenuation;
+                light.shadowAttenuation = 1.0;
                 // uint layerMask = DEFAULT_LIGHT_LAYERS;
-                return customLight;
+                return light;
             }
 
             Varyings vert(Attributes IN)
@@ -215,7 +275,7 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
 #if _ReadLight          
                 float4 lightPosWS = mul(_LightMatrixLocalToWorld, float4(0,0,0,1));
                 float3 lightForwardWS = mul((float3x3)_LightMatrixLocalToWorld, float3(0,0,1));
-                Light fakeLight = CustomLight(lightPosWS, IN.positionWS, lightForwardWS, (half)_LightColor, _LightSetting.x, _LightSetting.y, _LightSetting.z, _LightSetting.w);
+                Light fakeLight = CustomLight(lightPosWS, IN.positionWS, lightForwardWS, IN.normalWS, (half3)_LightColor, _LightSetting.x, _LightSetting.y, _LightSetting.z, _LightSetting.w);
                 lightColor.rgb += CalcBlinnPhong(fakeLight, IN.normalWS);
 #endif
                 // Fake light session - End

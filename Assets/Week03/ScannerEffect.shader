@@ -162,7 +162,7 @@ Shader "Kit/Universal Render Pipeline/ScannerEffect"
                 // it is just a unity cube(4*6 vertices) per decal only, won't affect GPU performance at all.
                 float4x4 ViewToObjectMatrix = mul(UNITY_MATRIX_I_M, UNITY_MATRIX_I_V);
                 // transform everything to object space(decal space) in vertex shader first, so we can skip all matrix mul() in fragment shader
-                OUT.viewRayOS.xyz = mul((float3x3)ViewToObjectMatrix, viewRay);
+                OUT.viewRayOS = float4(mul((float3x3)ViewToObjectMatrix, viewRay), viewRay.z);
                 OUT.cameraPosOS = mul(ViewToObjectMatrix, float4(0,0,0,1));
                 // hard code 0 or 1 can enable many compiler optimization
 

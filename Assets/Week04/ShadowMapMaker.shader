@@ -61,7 +61,7 @@ Shader "hidden/Kit/Universal Render Pipeline/ShadowMapMaker"
                 OUT.positionWS = vertexInput.positionWS;
                 // calculate here cheaper then fragment shader.
                 OUT.viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
-                float4 lightPosCS = mul(_MyShadowVP, vertexInput.positionWS);
+                float4 lightPosCS = mul((float4x3)_MyShadowVP, OUT.positionWS);
                 float d = lightPosCS.z / lightPosCS.w;
 				if (UNITY_NEAR_CLIP_VALUE == -1) {
 					d = d * 0.5 + 0.5;

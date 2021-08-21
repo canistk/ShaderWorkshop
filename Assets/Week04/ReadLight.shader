@@ -157,7 +157,7 @@ Shader "Kit/Universal Render Pipeline/ReadLight"
                 float4 orgColor = texColor * _Color;
                 
                 float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
-                half3 lightColor = orgColor * CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
+                half3 lightColor = orgColor.rgb * CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
                 
                 half4 addShadowDebug = half4(1,1,1,1);
                 int cnt = _MaxLightSrc; // GetAdditionalLightsCount());

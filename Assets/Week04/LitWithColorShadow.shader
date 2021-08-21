@@ -69,17 +69,19 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
             CBUFFER_START(UnityPerMaterial)
                 sampler2D       _MainTex;
                 sampler2D       _GlassTex;
+                float4x4        _LightMatrixLocalToWorld;
+                // float4x4        _LightMatrixWorldToLocal;
+                float4x4        _GlassMatrixLocalToWorld;
+                
                 float4          _MainTex_ST;
-                float4          _GlassTex_ST;
+                // float4          _GlassTex_ST;
                 float4          _Color;
 
-                float4x4        _GlassVP;
-                float4x4        _LightMatrixLocalToWorld;
-                float4x4        _LightMatrixWorldToLocal;
                 float4          _LightColor;
                 float4          _LightSetting; // x = Range, y = Intensity, z = Inner angle, w = outter angle
 
                 float           _MaxLightSrc;
+                float           _HadGlass; // _GlassTex
                 float           _DebugShadow;
                 float           _FlipLight;
             CBUFFER_END
@@ -160,9 +162,13 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
             }
 ***/
 
-            Light CustomLight(float4 lightPosWS, float3 positionWS, half3 spotLightDirection, half3 normalWS,
-                half3 color, float range, half intensity, half innerAngle, half outerAngle)
+            Light CustomLight(float4x4 lightMatrixL2W,
+                float3 positionWS, half3 normalWS, half3 color,
+                float range, half intensity, half innerAngle, half outerAngle)
             {
+                float4 lightPosWS = mul(lightMatrixL2W, float4(0,0,0,1));
+                half3 spotLightDirection = mul((float3x3)lightMatrixL2W, float3(0,0,1));
+
                 float3 lightVector = lightPosWS.xyz - positionWS * lightPosWS.w;
                 half distanceSqr = max(dot(lightVector, lightVector), 0.00001);
                 half3 lightDirection = half3(lightVector * rsqrt(distanceSqr)); // rsqrt(x) = 1 / sprt(x), 
@@ -272,13 +278,17 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 half3 lightColor = CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
                 
                 // Fake light session
-#if _ReadLight          
-                float4 lightPosWS = mul(_LightMatrixLocalToWorld, float4(0,0,0,1));
-                float3 lightForwardWS = mul((float3x3)_LightMatrixLocalToWorld, float3(0,0,1));
-                Light fakeLight = CustomLight(lightPosWS, IN.positionWS, lightForwardWS, IN.normalWS, (half3)_LightColor, _LightSetting.x, _LightSetting.y, _LightSetting.z, _LightSetting.w);
+#if _ReadLight
+                Light fakeLight = CustomLight(_LightMatrixLocalToWorld, IN.positionWS, IN.normalWS, (half3)_LightColor, _LightSetting.x, _LightSetting.y, _LightSetting.z, _LightSetting.w);
                 lightColor.rgb += CalcBlinnPhong(fakeLight, IN.normalWS);
 #endif
                 // Fake light session - End
+
+                // Fake Glass session
+                float4 fakeGlass = tex2D(_GlassTex, IN.uv);
+                lightColor = lerp(orgColor, fakeGlass, 1);
+
+                // Fake Glass session - End
 
                 half4 addShadowDebug = half4(1,1,1,1);
                 int cnt = _MaxLightSrc; // GetAdditionalLightsCount());

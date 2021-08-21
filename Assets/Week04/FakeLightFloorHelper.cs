@@ -9,6 +9,7 @@ public class FakeLightFloorHelper : MonoBehaviour
     private MaterialPropertyBlock m_Block = null;
 
     public Light m_LightSrc = null;
+
     public MeshRenderer m_Glass = null;
 
     private void Update()
@@ -23,7 +24,7 @@ public class FakeLightFloorHelper : MonoBehaviour
             Matrix4x4 localToWorldMatrix = m_LightSrc.transform.localToWorldMatrix;
             // if (m_LightSrc.type == LightType.Spot) { }
             m_Block.SetMatrix("_LightMatrixLocalToWorld", localToWorldMatrix);
-            m_Block.SetMatrix("_LightMatrixWorldToLocal", m_LightSrc.transform.worldToLocalMatrix);
+            // m_Block.SetMatrix("_LightMatrixWorldToLocal", m_LightSrc.transform.worldToLocalMatrix);
             m_Block.SetColor("_LightColor", m_LightSrc.color);
             Vector4 lightSetting = new Vector4
             {
@@ -33,6 +34,24 @@ public class FakeLightFloorHelper : MonoBehaviour
                 w = Mathf.Deg2Rad * Mathf.Min(m_LightSrc.spotAngle * 0.5f, 90.0f),
             };
             m_Block.SetVector("_LightSetting", lightSetting);
+        }
+
+        if (m_Glass && m_Glass.transform != null)
+        {
+            Transform glass = m_Glass.transform;
+            m_Block.SetMatrix("_GlassMatrixLocalToWorld", glass.localToWorldMatrix);
+            var texture = m_Glass.sharedMaterial.mainTexture;
+            m_Block.SetTexture("_GlassTex", texture);
+            m_Block.SetFloat("_HadGlass", 1);
+            //Vector2 offset = m_Glass.material.mainTextureOffset;
+            //Vector2 scale = m_Glass.material.mainTextureScale;
+            //Vector2 offset = m_Glass.material.GetTextureOffset("_BaseTex");
+            //Vector2 scale = m_Glass.material.GetTextureScale("_BaseTex");
+            //Vector4 glassTex_ST = new Vector4(offset.x, offset.y, scale.x, scale.y);
+        }
+        else
+        {
+            m_Block.SetFloat("_HadGlass", 0);
         }
 
         m_Renderer.SetPropertyBlock(m_Block);

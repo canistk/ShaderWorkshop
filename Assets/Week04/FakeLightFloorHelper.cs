@@ -27,8 +27,8 @@ public class FakeLightFloorHelper : MonoBehaviour
             {
                 x = m_LightSrc.range,
                 y = m_LightSrc.intensity,
-                z = m_LightSrc.innerSpotAngle,
-                w = m_LightSrc.spotAngle,
+                z = Mathf.Deg2Rad * Mathf.Min(m_LightSrc.innerSpotAngle * 0.5f, 88.0f),
+                w = Mathf.Deg2Rad * Mathf.Min(m_LightSrc.spotAngle * 0.5f, 90.0f),
             };
             m_Block.SetVector("_LightSetting", lightSetting);
         }

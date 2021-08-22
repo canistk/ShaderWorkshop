@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteInEditMode]
-public class FakeLightFloorHelper : MonoBehaviour
+public class FakeLightHelper : MonoBehaviour
 {
     public Renderer m_Renderer = null;
     private MaterialPropertyBlock m_Block = null;
@@ -44,11 +44,6 @@ public class FakeLightFloorHelper : MonoBehaviour
             var texture = m_Glass.sharedMaterial.mainTexture;
             m_Block.SetTexture("_GlassTex", texture);
             m_Block.SetInt("_HadGlass", 1);
-            //Vector2 offset = m_Glass.material.mainTextureOffset;
-            //Vector2 scale = m_Glass.material.mainTextureScale;
-            //Vector2 offset = m_Glass.material.GetTextureOffset("_BaseTex");
-            //Vector2 scale = m_Glass.material.GetTextureScale("_BaseTex");
-            //Vector4 glassTex_ST = new Vector4(offset.x, offset.y, scale.x, scale.y);
         }
         else
         {

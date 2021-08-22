@@ -73,7 +73,6 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 float4x4        _GlassMatrixLocalToWorld;
                 float4x4        _GlassMatrixWorldToLocal;
                 
-                float4          _GlassQuadScale;
                 float4          _MainTex_ST;
                 float4          _Color;
 
@@ -162,14 +161,14 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
             }
 ***/
 
-            Light CustomLight(float4 lightPosWS, half3 spotLightDirection,
+            Light CustomLight(half4 lightPosWS, half3 spotLightDirection,
                 float3 positionWS, half3 normalWS, half3 color,
                 float range, half intensity, half innerAngle, half outerAngle)
             {
                 //float4 lightPosWS = mul(lightMatrixL2W, float4(0,0,0,1));
                 //half3 spotLightDirection = mul((float3x3)lightMatrixL2W, float3(0,0,1));
 
-                float3 lightVector = lightPosWS.xyz - positionWS * lightPosWS.w;
+                half3 lightVector = lightPosWS.xyz - positionWS * lightPosWS.w;
                 half distanceSqr = max(dot(lightVector, lightVector), 0.00001);
                 half3 lightDirection = half3(lightVector * rsqrt(distanceSqr)); // rsqrt(x) = 1 / sprt(x), 
                 // lightDirection can be rewrite in 
@@ -246,8 +245,8 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
             }
 
             half4 IntersectPointOnPlane(half3 origin, half3 direction, half maxDistance,
-                half3 quadPosWS, half3 surfaceNormal, half2 size,
-                float4x4 glassMatrixWorldToLocal, sampler2D tex)
+                half3 quadPosWS, half3 surfaceNormal,
+                half4x4 glassMatrixWorldToLocal, sampler2D tex)
             {
                 half denominator = -dot(surfaceNormal, direction); // reverse to intersect
 			    if (denominator > 1e-6) // avoid too close to 0, float point error.
@@ -256,11 +255,10 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
 				    if (0.0 < distance && distance <= maxDistance)
 				    {
                         // TODO: missing light angle checking.
-                        
                         half3 hitPosWS = origin + direction * distance;
                         // Assume it's Quad, and PositionOS == UV.
                         // Convert to local space.
-                        half3 gPosOS = mul(glassMatrixWorldToLocal, hitPosWS);
+                        half3 gPosOS = mul(glassMatrixWorldToLocal, half4(hitPosWS,1));
                         if (-0.5 <= gPosOS.x && gPosOS.x <= 0.5 &&
                             -0.5 <= gPosOS.y && gPosOS.y <= 0.5)
                         {
@@ -310,8 +308,8 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 // Fake light session
 #if _ReadLight
 #endif
-                float4 lightPosWS = mul(_LightMatrixLocalToWorld, float4(0,0,0,1));
-                half3 spotLightDirection = mul((float3x3)_LightMatrixLocalToWorld, float3(0,0,1));
+                half4 lightPosWS = mul(_LightMatrixLocalToWorld, half4(0,0,0,1));
+                half3 spotLightDirection = mul((half3x3)_LightMatrixLocalToWorld, half3(0,0,1));
                 Light fakeLight = CustomLight(lightPosWS, spotLightDirection, IN.positionWS, IN.normalWS, (half3)_LightColor, _LightSetting.x, _LightSetting.y, _LightSetting.z, _LightSetting.w);
                 lightColor.rgb += CalcBlinnPhong(fakeLight, IN.normalWS);
                 // Fake light session - End
@@ -319,21 +317,21 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 // Fake Glass session
                 if (_HadGlass == 1)
                 {
-                    float4 glassPosWS = mul(_GlassMatrixLocalToWorld, float4(0,0,0,1));
-                    half3 glassFacing = mul((float3x3)_GlassMatrixLocalToWorld, float3(0,0,1));
-                    half3 glassSize = _GlassQuadScale.xyz; // z-axis should be ignore. (Quad)
+                    half3 glassPosWS = mul((half3x4)_GlassMatrixLocalToWorld, half4(0,0,0,1));
+                    half3 glassFacing = mul((half3x3)_GlassMatrixLocalToWorld, half3(0,0,1));
 
-                    // float4 gColor = ReadGlassColor(_GlassMatrixLocalToWorld, _GlassTex, IN.uv);
-                    // float4 gColor = tex2D(_GlassTex, IN.uv);
                     half3 toLightVector = lightPosWS.xyz - IN.positionWS;
                     half toLightDistanceSqr = max(dot(toLightVector, toLightVector), 0.00001);
                     half toLightDistance = sqrt(toLightDistanceSqr);
                     half3 toLightDirection = half3(toLightVector * rsqrt(toLightDistanceSqr));
-
-                    half4 gColor = IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, glassPosWS, glassFacing, glassSize.xy, _GlassMatrixWorldToLocal, _GlassTex);
-                    gColor += IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, glassPosWS, -glassFacing, glassSize.xy, _GlassMatrixWorldToLocal, _GlassTex);
-
-                    lightColor += gColor.rgb * gColor.a;
+                    
+                    half withInSpot = dot(toLightDirection, spotLightDirection);
+                    if (withInSpot < 0)
+                    {
+                        half4 gColor = IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, glassPosWS, glassFacing, _GlassMatrixWorldToLocal, _GlassTex);
+                        gColor += IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, glassPosWS, -glassFacing, _GlassMatrixWorldToLocal, _GlassTex);
+                        lightColor += gColor.rgb * gColor.a;
+                    }
                 }
 
                 // Fake Glass session - End

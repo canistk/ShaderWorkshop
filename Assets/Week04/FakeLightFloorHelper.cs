@@ -41,7 +41,6 @@ public class FakeLightFloorHelper : MonoBehaviour
             Transform glass = m_Glass.transform;
             m_Block.SetMatrix("_GlassMatrixLocalToWorld", glass.localToWorldMatrix);
             m_Block.SetMatrix("_GlassMatrixWorldToLocal", glass.worldToLocalMatrix);
-            m_Block.SetVector("_GlassQuadScale", (Vector4) glass.lossyScale);
             var texture = m_Glass.sharedMaterial.mainTexture;
             m_Block.SetTexture("_GlassTex", texture);
             m_Block.SetInt("_HadGlass", 1);

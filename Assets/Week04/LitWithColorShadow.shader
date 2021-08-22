@@ -245,28 +245,27 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
             }
 
             half4 IntersectPointOnPlane(half3 origin, half3 direction, half maxDistance,
-                half3 quadPosWS, half3 surfaceNormal,
-                half4x4 glassMatrixWorldToLocal, sampler2D tex)
+                Light light,
+                half3 quadPosWS, half3 quadNormal,
+                half4x4 quadMatrixWorldToLocal, sampler2D quadTex)
             {
-                half denominator = -dot(surfaceNormal, direction); // reverse to intersect
+                half denominator = -dot(quadNormal, direction); // reverse to intersect
 			    if (denominator > 1e-6) // avoid too close to 0, float point error.
 			    {
-				    half distance = dot(surfaceNormal, origin - quadPosWS) / denominator;
+				    half distance = dot(quadNormal, origin - quadPosWS) / denominator;
 				    if (0.0 < distance && distance <= maxDistance)
 				    {
-                        // TODO: missing light angle checking.
                         half3 hitPosWS = origin + direction * distance;
                         // Assume it's Quad, and PositionOS == UV.
                         // Convert to local space.
-                        half3 gPosOS = mul(glassMatrixWorldToLocal, half4(hitPosWS,1));
+                        half4 gPosOS = mul(quadMatrixWorldToLocal, half4(hitPosWS,1));
                         if (-0.5 <= gPosOS.x && gPosOS.x <= 0.5 &&
                             -0.5 <= gPosOS.y && gPosOS.y <= 0.5)
                         {
                             half2 uv = half2(gPosOS.xy + 0.5);
-                            half4 color = tex2D(tex, uv);
-
-                            // TODO: missing light fallOff
-                            return color;
+                            half4 color = tex2D(quadTex, uv);
+                            half3 finColor = color.rgb * light.color * light.distanceAttenuation;
+                            return half4(finColor, color.a);
                         }
 				    }
 			    }
@@ -305,9 +304,8 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 half3 lightColor = CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
                 
-                // Fake light session
 #if _ReadLight
-#endif
+                // Fake light session
                 half4 lightPosWS = mul(_LightMatrixLocalToWorld, half4(0,0,0,1));
                 half3 spotLightDirection = mul((half3x3)_LightMatrixLocalToWorld, half3(0,0,1));
                 Light fakeLight = CustomLight(lightPosWS, spotLightDirection, IN.positionWS, IN.normalWS, (half3)_LightColor, _LightSetting.x, _LightSetting.y, _LightSetting.z, _LightSetting.w);
@@ -317,7 +315,7 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 // Fake Glass session
                 if (_HadGlass == 1)
                 {
-                    half3 glassPosWS = mul((half3x4)_GlassMatrixLocalToWorld, half4(0,0,0,1));
+                    half3 glassPosWS = mul(_GlassMatrixLocalToWorld, half4(0,0,0,1));
                     half3 glassFacing = mul((half3x3)_GlassMatrixLocalToWorld, half3(0,0,1));
 
                     half3 toLightVector = lightPosWS.xyz - IN.positionWS;
@@ -328,13 +326,13 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                     half withInSpot = dot(toLightDirection, spotLightDirection);
                     if (withInSpot < 0)
                     {
-                        half4 gColor = IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, glassPosWS, glassFacing, _GlassMatrixWorldToLocal, _GlassTex);
-                        gColor += IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, glassPosWS, -glassFacing, _GlassMatrixWorldToLocal, _GlassTex);
+                        half4 gColor = IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, fakeLight, glassPosWS, glassFacing, _GlassMatrixWorldToLocal, _GlassTex);
+                        gColor += IntersectPointOnPlane(IN.positionWS.xyz, toLightDirection, toLightDistance, fakeLight, glassPosWS, -glassFacing, _GlassMatrixWorldToLocal, _GlassTex);
                         lightColor += gColor.rgb * gColor.a;
                     }
                 }
-
                 // Fake Glass session - End
+#endif
 
                 half4 addShadowDebug = half4(1,1,1,1);
                 int cnt = _MaxLightSrc; // GetAdditionalLightsCount());

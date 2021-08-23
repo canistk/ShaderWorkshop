@@ -6,14 +6,10 @@ using UnityEngine.Rendering.Universal;
 
 namespace Kit
 {
-    public class PostProcessRender : URPCustomRenderBase
+	public class PostProcessRender : URPCustomRenderBase
     {
         public Material material;
         static Mesh fullScreenTriangle;
-        public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor) { }
-
-        public override void FrameCleanup(CommandBuffer cmd) { }
-
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
 		{
 			if (!material) return;

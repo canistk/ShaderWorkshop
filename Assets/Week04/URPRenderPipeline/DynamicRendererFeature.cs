@@ -6,6 +6,13 @@ using UnityEngine.Rendering.Universal;
 
 namespace Kit
 {
+    /// <summary>
+    /// Require to register <see cref="DynamicRendererFeature"/> once,
+    /// into "URP/Setting/ForwardRender.asset" by doing that,
+    /// we can use <see cref="URPHelper"/> to dynamic apply render pass by code.
+    /// instead of play around those complicate setting.
+    /// on pipe line & scriptableobject mess.
+    /// </summary>
     public class DynamicRendererFeature : ScriptableRendererFeature
     {
         public override void Create()

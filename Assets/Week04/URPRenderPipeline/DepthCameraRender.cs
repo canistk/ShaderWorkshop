@@ -6,47 +6,55 @@ using UnityEngine.Rendering.Universal;
 
 namespace Kit
 {
-	/// <summary>
-	/// A redirection of <see cref="PostProcessRenderPass"/>
-	/// </summary>
     public class DepthCameraRender : URPCustomRenderBase
     {
-        public Material material;
-        static Mesh fullScreenTriangle;
+		public Camera m_Camera;
+        RenderTargetIdentifier colorBuffer, temporaryBuffer;
+        int temporaryBufferID = Shader.PropertyToID("_TemporaryBuffer");
 
-		public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
-		{
-		}
+        // TODO:
+        // https://gist.github.com/alexanderameye/bb4ec2798a2d101ad505ce4f7a0f58f4
+        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
+        {
+            RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
+            // Downsample the original camera target descriptor. 
+            // You would do this for performance reasons or less commonly, for aesthetics.
+            //descriptor.width /= passSettings.downsample;
+            //descriptor.height /= passSettings.downsample;
 
-		public override void FrameCleanup(CommandBuffer cmd)
-		{
-		}
+            // Set the number of depth bits we need for our temporary render texture.
+            descriptor.depthBufferBits = 0;
+            // Enable these if your pass requires access to the CameraDepthTexture or the CameraNormalsTexture.
+            //ConfigureInput(ScriptableRenderPassInput.Depth);
+            //ConfigureInput(ScriptableRenderPassInput.Normal);
 
-		public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-		{
-			if (!material) return;
+            // Grab the color buffer from the renderer camera color target.
+            colorBuffer = renderingData.cameraData.renderer.cameraColorTarget;
+            // Create a temporary render texture using the descriptor from above.
+            cmd.GetTemporaryRT(temporaryBufferID, descriptor, FilterMode.Bilinear);
+            temporaryBuffer = new RenderTargetIdentifier(temporaryBufferID);
+        }
+        public override void OnCameraCleanup(CommandBuffer cmd)
+        {
+            if (cmd == null) throw new System.ArgumentNullException("cmd");
 
-			if (!fullScreenTriangle)
-			{
-				fullScreenTriangle = new Mesh()
-				{
-					name = "MyPostProcessSimple",
-					vertices = new Vector3[] {
-					new Vector3(-1, -1, 0),
-					new Vector3( 3, -1, 0),
-					new Vector3(-1,  3, 0),
-				},
-					triangles = new int[] { 0, 1, 2 }
-				};
-				fullScreenTriangle.UploadMeshData(true);
-			}
+            // Since we created a temporary render texture in OnCameraSetup, we need to release the memory here to avoid a leak.
+            cmd.ReleaseTemporaryRT(temporaryBufferID);
+        }
+        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        {
+            // Grab a command buffer. We put the actual execution of the pass inside of a profiling scope.
+            CommandBuffer cmd = CommandBufferPool.Get();
+            //using (new ProfilingScope(cmd, new ProfilingSampler(ProfilerTag)))
+            //{
+            //    // Blit from the color buffer to a temporary buffer and back. This is needed for a two-pass shader.
+            //    Graphics.Blit(cmd, colorBuffer, temporaryBuffer, material, 0); // shader pass 0
+            //    Graphics.Blit(cmd, temporaryBuffer, colorBuffer, material, 1); // shader pass 1
+            //}
 
-			CommandBuffer cmd = CommandBufferPool.Get(GetType().Name);
-			cmd.Clear();
-			cmd.DrawMesh(fullScreenTriangle, Matrix4x4.identity, material);
-			context.ExecuteCommandBuffer(cmd);
-			cmd.Clear();
-			CommandBufferPool.Release(cmd);
-		}
+            // Execute the command buffer and release it.
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+        }
     }
 }

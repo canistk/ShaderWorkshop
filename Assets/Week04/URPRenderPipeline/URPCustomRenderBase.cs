@@ -24,11 +24,15 @@ namespace Kit
             URPHelper.instance.UnRegister(this);
         }
 
-        public abstract void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor);
+        public virtual void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor) { }
 
-        public abstract void FrameCleanup(CommandBuffer cmd);
+        public virtual void FrameCleanup(CommandBuffer cmd) { }
 
-        public abstract void Execute(ScriptableRenderContext context, ref RenderingData renderingData);
+        public virtual void Execute(ScriptableRenderContext context, ref RenderingData renderingData) { }
+
+        public virtual void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData) { }
+        public virtual void OnCameraCleanup(CommandBuffer cmd) { }
+        public virtual void OnFinishCameraStackRendering(CommandBuffer cmd) { }
     }
 
     [ExecuteInEditMode]
@@ -55,19 +59,22 @@ namespace Kit
                 m_Volume.Execute(context, ref renderingData);
         }
 
-        //public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
-        //{
-        //    base.OnCameraSetup(cmd, ref renderingData);
-        //}
+        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
+        {
+            if (m_Volume)
+                m_Volume.OnCameraSetup(cmd, ref renderingData);
+        }
 
-        //public override void OnCameraCleanup(CommandBuffer cmd)
-        //{
-        //    base.OnCameraCleanup(cmd);
-        //}
+        public override void OnCameraCleanup(CommandBuffer cmd)
+        {
+            if (m_Volume)
+                m_Volume.OnCameraCleanup(cmd);
+        }
 
-        //public override void OnFinishCameraStackRendering(CommandBuffer cmd)
-        //{
-        //    base.OnFinishCameraStackRendering(cmd);
-        //}
+        public override void OnFinishCameraStackRendering(CommandBuffer cmd)
+        {
+            if (m_Volume)
+                m_Volume.OnFinishCameraStackRendering(cmd);
+        }
     }
 }

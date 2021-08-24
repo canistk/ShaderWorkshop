@@ -1,83 +1,61 @@
 Shader "hidden/Kit/Universal Render Pipeline/ShadowMapMaker"
 {
-    Properties
-    {
-    }
-
     SubShader
     {
         // https://docs.unity3d.com/Manual/SL-SubShaderTags.html
         Tags {
-            "RenderType" = "Opaque"
-            "Queue" = "Geometry"
+            "RenderType" = "Transparent"
+            "Queue" = "Transparent"
             "RenderPipeline" = "UniversalRenderPipeline"
             "ForceNoShadowCasting" = "True"
             "IgnoreProjector" = "True"
         }
-        LOD 150
-        ZWrite On
 
         Pass
         {
-            Name "ForwardLit"
-            Tags {
-                "LightMode" = "UniversalForward"
-            }
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
 
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            
-
-            CBUFFER_START(UnityPerMaterial)
-                sampler2D   _MyShadowMap;
-                float4x4    _MyShadowVP;
-            CBUFFER_END
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             struct Attributes
             {
                 float4  positionOS  : POSITION;
-                half3   normalOS    : NORMAL;
-                float4  tangentOS   : TANGENT;
             };
 
             struct Varyings
             {
-                float4 positionCS   : SV_POSITION;
-                float3 positionWS   : TEXCOORD0;
-                float4 normalWS_Depth : TEXCOORD1;
-                half3 viewDirWS     : TEXCOORD2;
+                float4 positionHCS   : SV_POSITION;
             };
 
+            float GetSceneDepth(float2 screenUV)
+            {
+                // Sample the depth from the Camera depth texture.
+                // Reconstruct the world space positions.
+#if UNITY_REVERSED_Z
+                float depth = SampleSceneDepth(screenUV);
+#else
+                // Adjust z to match NDC for OpenGL
+                float depth = lerp(UNITY_NEAR_CLIP_VALUE, 1, SampleSceneDepth(screenUV));
+#endif
+                return depth;
+            }
 
             Varyings vert(Attributes IN)
             {
                 Varyings OUT;
-                VertexPositionInputs vertexInput = GetVertexPositionInputs(IN.positionOS.xyz);
-                VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangentOS);
-                OUT.positionCS = vertexInput.positionCS;
-                OUT.positionWS = vertexInput.positionWS;
-                // calculate here cheaper then fragment shader.
-                OUT.viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
-                float4 lightPosCS = mul((float4x3)_MyShadowVP, OUT.positionWS);
-                float d = lightPosCS.z / lightPosCS.w;
-				if (UNITY_NEAR_CLIP_VALUE == -1) {
-					d = d * 0.5 + 0.5;
-				}
-				#if UNITY_REVERSED_Z
-					d = 1 - d;
-				#endif
-
-                OUT.normalWS_Depth = float4(normalInput.normalWS, d);
+                OUT.positionHCS = IN.positionOS;
                 return OUT;
             }
 
             float4 frag(Varyings IN) : SV_Target
             {
-                return float4 (0.0,0.2,0.0,1.0);
-               // return float4 (0, IN.normalWS_Depth.a, 0, 1);
+                float2 screenUV = IN.positionHCS.xy / _ScaledScreenParams.xy;
+                float depth = GetSceneDepth(screenUV);
+                return float4 (depth, 0, 0, 1);
             }
             ENDHLSL
         }

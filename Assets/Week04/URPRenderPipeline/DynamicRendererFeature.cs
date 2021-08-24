@@ -58,14 +58,20 @@ namespace Kit
 
         internal void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            foreach (var t in m_volumes)
+            foreach (var kvp in m_volumes)
             {
-                if (t.Key == null || t.Value == null) continue;
-                t.Key.cameraColorTarget = renderer.cameraColorTarget;
-                t.Value.renderPassEvent = t.Key.renderPassEvent;
-                renderer.EnqueuePass(t.Value);
+                if (kvp.Key == null || kvp.Value == null) continue;
+                kvp.Key.cameraColorTarget = renderer.cameraColorTarget;
+                kvp.Value.renderPassEvent = kvp.Key.renderPassEvent;
+                renderer.EnqueuePass(kvp.Value);
             }
+
+            if (OnAddRenderPasses != null)
+                OnAddRenderPasses.Invoke(renderer, ref renderingData);
         }
+
+        public delegate void OnAddRenderPassesDelegate(ScriptableRenderer renderer, ref RenderingData renderingData);
+        public event OnAddRenderPassesDelegate OnAddRenderPasses;
     }
 
 }

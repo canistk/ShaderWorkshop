@@ -229,6 +229,7 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 half AngleAtten = saturate(SdotL * invAngleRange + (-cosOuterAngle * invAngleRange));
                 half AngleAttenuation = (AngleAtten * AngleAtten);
 #else
+                // SdotL - Offset / (Innter - outer)
                 half AngleAttenuation = saturate((SdotL - cosOuterAngle) / (cosInnerAngle - cosOuterAngle));
 #endif
                 

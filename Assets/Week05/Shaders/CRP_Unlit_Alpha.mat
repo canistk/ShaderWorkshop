@@ -25,7 +25,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _Clipping: 1
-    - _Cutoff: 0.8
+    - _Cutoff: 0.451
     - _DstBlend: 10
     - _SrcBlend: 3
     - _ZWrite: 1

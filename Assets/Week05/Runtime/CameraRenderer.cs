@@ -9,7 +9,10 @@ public partial class CameraRenderer
     Camera camera;
     const string bufferName = "Render Camera";
     CullingResults cullingResults;
-    static ShaderTagId unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit");
+    static ShaderTagId 
+        unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
+        litShaderTagId = new ShaderTagId("CustomLit");
+
     Lighting lighting = new Lighting();
     CommandBuffer buffer = new CommandBuffer {};
 
@@ -69,7 +72,9 @@ public partial class CameraRenderer
         };
         var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
-        
+        drawingSettings.SetShaderPassName(1, litShaderTagId);
+
+
         context.DrawSkybox(camera);
 
         sortingSettings.criteria = SortingCriteria.CommonTransparent;

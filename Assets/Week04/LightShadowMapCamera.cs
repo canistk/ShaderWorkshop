@@ -8,6 +8,7 @@ using UnityEngine;
 [ExecuteInEditMode]
 [ImageEffectAllowedInSceneView]
 [RequireComponent(typeof(Camera))]
+[System.Obsolete("This function not working under URP pipeline")]
 public class LightShadowMapCamera : MonoBehaviour
 {
     public Light m_Light;
@@ -26,7 +27,6 @@ public class LightShadowMapCamera : MonoBehaviour
     {
 		if (m_Shader == null)
 			return;
-		return;
         Matrix4x4 shadowVP = m_ShadowCam.projectionMatrix * m_ShadowCam.worldToCameraMatrix;
 		Shader.SetGlobalMatrix("_MyShadowVP", shadowVP);
 		Shader.SetGlobalTexture("_MyShadowMap", m_ShadowMap);

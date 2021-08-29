@@ -27,7 +27,7 @@ public partial class CameraRenderer
             return;
         }
         Setup();
-        lighting.Setup(context);
+        lighting.Setup(context, cullingResults);
         DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
         DrawUnsupportedShaders();
         DrawGizmos();
@@ -70,9 +70,9 @@ public partial class CameraRenderer
             enableDynamicBatching = useDynamicBatching,
             enableInstancing = useGPUInstancing,
         };
+        drawingSettings.SetShaderPassName(1, litShaderTagId);
         var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
-        drawingSettings.SetShaderPassName(1, litShaderTagId);
 
 
         context.DrawSkybox(camera);

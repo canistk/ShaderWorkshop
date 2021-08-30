@@ -6,8 +6,10 @@ public class CustomRenderPipeline : RenderPipeline
 {
     bool useDynamicBatching = true, useGPUInstancing = true;
     CameraRenderer renderer = new CameraRenderer();
-    public CustomRenderPipeline(bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher)
+
+    public CustomRenderPipeline(bool useDynamicBatching, bool useGPUInstancing, bool useSRPBatcher, GBuffer gBuffer)
     {
+        renderer.AssignGBuffer(gBuffer);
         this.useDynamicBatching = useDynamicBatching;
         this.useGPUInstancing = useGPUInstancing;
         GraphicsSettings.useScriptableRenderPipelineBatching = useSRPBatcher;

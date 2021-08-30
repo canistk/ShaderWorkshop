@@ -14,4 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   useDynamicBatching: 1
   useGPUInstancing: 1
-  useSRPBatcher: 0
+  useSRPBatcher: 1
+  rtPosition: {fileID: 8400000, guid: 45bc623c101676844ae781f890df1b30, type: 2}
+  rtNormals: {fileID: 8400000, guid: 1f87cca4b0a64fd429051092a6782f08, type: 2}
+  rtDepth: {fileID: 8400000, guid: 10202f79a9e060645b5a9dd6a51fe89b, type: 2}
+  rtAlbedo: {fileID: 8400000, guid: 7411583b2d9bb0840a1c53d38b8e8229, type: 2}
+  rtSpecular: {fileID: 8400000, guid: 4c43532b8af099945b2d222f0f9e78f5, type: 2}
+  gBufferShader: {fileID: 4800000, guid: 7240b20afbcb3b842bdf1ad6d5b703f0, type: 3}

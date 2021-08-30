@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.12731749, g: 0.13414757, b: 0.1210787, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -170,7 +170,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.06155575, g: 0.902156, b: 0.5524569, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &29489383
 SphereCollider:
@@ -234,6 +236,99 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 29489380}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &76127904
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 76127906}
+  - component: {fileID: 76127905}
+  m_Layer: 0
+  m_Name: Directional Light (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!108 &76127905
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 76127904}
+  m_Enabled: 1
+  serializedVersion: 10
+  m_Type: 1
+  m_Shape: 0
+  m_Color: {r: 0.2117647, g: 0.43935952, b: 1, a: 1}
+  m_Intensity: 1
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 0
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.02
+    m_NormalBias: 0.1
+    m_NearPlane: 0.1
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 0
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+--- !u!4 &76127906
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 76127904}
+  m_LocalRotation: {x: 0.123444565, y: 0.30600038, z: 0.92348254, w: 0.19571725}
+  m_LocalPosition: {x: 2.54, y: 2.3856554, z: 2.68}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 8
+  m_LocalEulerAnglesHint: {x: -31.121, y: -336.031, z: -210.698}
 --- !u!1 &112980340
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,7 +471,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.42715985, g: 0.23589852, b: 0.35678652, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &113330396
 SphereCollider:
@@ -456,7 +553,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &131960693
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -533,7 +630,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.21559003, g: 0.58466977, b: 0.12163521, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &233284139
 SphereCollider:
@@ -597,6 +696,99 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 233284136}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &251729723
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 251729725}
+  - component: {fileID: 251729724}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!108 &251729724
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 251729723}
+  m_Enabled: 1
+  serializedVersion: 10
+  m_Type: 1
+  m_Shape: 0
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 1
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 2
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.02
+    m_NormalBias: 0.1
+    m_NearPlane: 0.1
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+--- !u!4 &251729725
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 251729723}
+  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalPosition: {x: 7.9265594, y: 2.3856554, z: 1.5794303}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
 --- !u!1 &286077878
 GameObject:
   m_ObjectHideFlags: 0
@@ -782,7 +974,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.8974495, g: 0.0070986757, b: 0.6576027, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &322788529
 SphereCollider:
@@ -893,7 +1087,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.025192622, g: 0.6144126, b: 0.07402874, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &370764873
 SphereCollider:
@@ -1212,7 +1408,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: af2d50ec5813e9344931eccc67543357, type: 2}
+  - {fileID: 2100000, guid: 61bee7b0bf5eafc46942bb566de029a8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1242,6 +1438,101 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 523171083}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &563057609
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 563057613}
+  - component: {fileID: 563057612}
+  - component: {fileID: 563057611}
+  - component: {fileID: 563057610}
+  m_Layer: 0
+  m_Name: Sphere
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!135 &563057610
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563057609}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &563057611
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563057609}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 957175217eec74c4caa82a2c473ca703, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &563057612
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563057609}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &563057613
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 563057609}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.2020092, y: 0.9232138, z: -0.78093815}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &573138028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1289,7 +1580,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.4446091, g: 0.13292314, b: 0.7871698, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &573138031
 SphereCollider:
@@ -1400,7 +1693,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.95856297, g: 0.10252823, b: 0.4682688, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &573385429
 SphereCollider:
@@ -1511,7 +1806,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.9736202, g: 0.91355944, b: 0.80969155, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &594260308
 SphereCollider:
@@ -1622,7 +1919,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.99665284, g: 0.374321, b: 0.063626416, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &729832356
 SphereCollider:
@@ -1733,7 +2032,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.77809846, g: 0.8364475, b: 0.19990292, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &746442410
 SphereCollider:
@@ -1844,7 +2145,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.16027106, g: 0.68060607, b: 0.6174689, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &949475499
 SphereCollider:
@@ -1955,7 +2258,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.41170603, g: 0.55094796, b: 0.1042607, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &980841664
 SphereCollider:
@@ -2161,7 +2466,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.71362454, g: 0.5572826, b: 0.7527696, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1044337059
 SphereCollider:
@@ -2272,7 +2579,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.90991867, g: 0.50686604, b: 0.0136824865, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1197317427
 SphereCollider:
@@ -2496,7 +2805,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 1cc68ed2bdc18e24babddee14f0ab51a, type: 2}
+  - {fileID: 2100000, guid: afb55b5743f380e4eb965095f4e386c0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2573,7 +2882,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.5965248, g: 0.46106905, b: 0.8620658, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1272124431
 SphereCollider:
@@ -2684,7 +2995,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.33917657, g: 0.35575154, b: 0.6276489, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1316056913
 SphereCollider:
@@ -2890,7 +3203,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.3025333, g: 0.03361011, b: 0.5966777, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1387837441
 SphereCollider:
@@ -3001,7 +3316,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.023510817, g: 0.89743054, b: 0.17462195, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1388868566
 SphereCollider:
@@ -3269,8 +3586,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1460741802}
-  m_LocalRotation: {x: -0.086265765, y: 0.91159785, z: -0.24965246, w: -0.31499407}
-  m_LocalPosition: {x: 11.092197, y: 11.213083, z: 14.330151}
+  m_LocalRotation: {x: -0.18168773, y: 0.7328777, z: -0.21495615, w: -0.61941403}
+  m_LocalPosition: {x: 10.941869, y: 5.2688646, z: 0.62028337}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -3554,7 +3871,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.39645547, g: 0.5184395, b: 0.50455934, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1734285194
 SphereCollider:
@@ -3665,7 +3984,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.57462937, g: 0.5367026, b: 0.28745463, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1736101287
 SphereCollider:
@@ -3776,7 +4097,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.6304613, g: 0.74785334, b: 0.45224303, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1744142012
 SphereCollider:
@@ -3887,7 +4210,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.94844246, g: 0.03518117, b: 0.51704043, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1757008111
 SphereCollider:
@@ -3998,7 +4323,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.9463757, g: 0.94826233, b: 0.670965, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1760935968
 SphereCollider:
@@ -4109,7 +4436,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.7570667, g: 0.9918932, b: 0.84973204, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1797998741
 SphereCollider:
@@ -4220,7 +4549,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.77757955, g: 0.5556428, b: 0.9722589, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1852707173
 SphereCollider:
@@ -4331,7 +4662,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.24533537, g: 0.30360308, b: 0.6418695, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1856511324
 SphereCollider:
@@ -4442,7 +4775,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.5754097, g: 0.9008292, b: 0.7413601, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1859882968
 SphereCollider:
@@ -4581,7 +4916,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1882881820}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.0053163, y: 0.3779352, z: -2.666302}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -4634,7 +4969,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.61040384, g: 0.7025215, b: 0.39517444, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1913453747
 SphereCollider:
@@ -4745,7 +5082,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.9813559, g: 0.6101499, b: 0.34888652, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1923534590
 SphereCollider:
@@ -4809,6 +5148,99 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1923534587}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1959019302
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1959019304}
+  - component: {fileID: 1959019303}
+  m_Layer: 0
+  m_Name: Directional Light (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!108 &1959019303
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1959019302}
+  m_Enabled: 1
+  serializedVersion: 10
+  m_Type: 1
+  m_Shape: 0
+  m_Color: {r: 1, g: 0.21226418, b: 0.34355372, a: 1}
+  m_Intensity: 1
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 0
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.02
+    m_NormalBias: 0.1
+    m_NearPlane: 0.1
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 0
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+--- !u!4 &1959019304
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1959019302}
+  m_LocalRotation: {x: 0.66186666, y: -0.722105, z: 0.13124983, w: -0.15254624}
+  m_LocalPosition: {x: 2.54, y: 2.3856554, z: 2.68}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 7
+  m_LocalEulerAnglesHint: {x: -0.709, y: -203.209, z: -84.87}
 --- !u!1 &1987723808
 GameObject:
   m_ObjectHideFlags: 0
@@ -4856,7 +5288,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.32512084, g: 0.3608835, b: 0.36960593, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &1987723811
 SphereCollider:
@@ -5062,7 +5496,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.15781654, g: 0.345454, b: 0.45306188, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &2049499894
 SphereCollider:
@@ -5173,7 +5609,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseColor: {r: 0.28141358, g: 0.19487813, b: 0.42134243, a: 1}
-  cutoff: 0.5
+  alphaCutoff: 0.5
+  metallic: 0
+  smoothness: 0.5
   m_RandomColor: 0
 --- !u!135 &2115700007
 SphereCollider:

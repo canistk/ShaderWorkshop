@@ -9,25 +9,29 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: CRP_LIt_Opaque
   m_Shader: {fileID: 4800000, guid: 82c0a6df12c25384f91e907d8901c482, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: _PREMULTIPLY_ALPHA
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 8bfd08a85144adf4fa8748af76c4c076, type: 3}
+        m_Texture: {fileID: 2800000, guid: b52ebb77680d6414aa021669d52fde03, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _DstBlend: 0
+    - _Clipping: 0
+    - _Cutoff: 0.5
+    - _DstBlend: 10
     - _Metallic: 0
+    - _PremulAlpha: 1
     - _Smoothness: 0.5
     - _SrcBlend: 1
+    - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

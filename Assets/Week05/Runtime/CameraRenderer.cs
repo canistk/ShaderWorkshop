@@ -11,21 +11,32 @@ public partial class CameraRenderer
     CullingResults cullingResults;
     static ShaderTagId 
         unlitShaderTagId = new ShaderTagId("SRPDefaultUnlit"),
-        litShaderTagId = new ShaderTagId("CustomLit");
+        litShaderTagId = new ShaderTagId("CustomLit"),
+        gBufferShaderTagId = new ShaderTagId("GBuffer");
 
     Lighting lighting = new Lighting();
     CommandBuffer buffer = new CommandBuffer {};
+    GBuffer gBuffer;
+    public void AssignGBuffer(GBuffer gBuffer)
+    {
+        this.gBuffer = gBuffer;
+    }
 
-    public void Render(ScriptableRenderContext context, Camera camera,bool useDynamicBatching, bool useGPUInstancing)
+    public void Render(ScriptableRenderContext context, Camera camera, bool useDynamicBatching, bool useGPUInstancing)
     {
         this.context = context;
         this.camera = camera;
+
+
         PrepareBuffer();
         PrepareForSceneWindow();
         if (!Cull())
         {
             return;
         }
+
+        FetchGBuffer();
+
         Setup();
         lighting.Setup(context, cullingResults);
         DrawVisibleGeometry(useDynamicBatching, useGPUInstancing);
@@ -61,6 +72,35 @@ public partial class CameraRenderer
     {
         context.ExecuteCommandBuffer(buffer);
         buffer.Clear();
+    }
+    void FetchGBuffer()
+    {
+        context.SetupCameraProperties(camera);
+        buffer.ClearRenderTarget(true, true, Color.blue);
+        ExecuteBuffer();
+
+        buffer.SetRenderTarget(new RenderTargetIdentifier[2]
+        {
+            gBuffer.positionId,
+            gBuffer.normalsId
+        },
+        gBuffer.depthId);
+        context.ExecuteCommandBuffer(buffer);
+        context.Submit();
+        buffer.Clear();
+
+        //var sortingSettings = new SortingSettings(camera)
+        //{
+        //    criteria = SortingCriteria.CommonOpaque // Problem ?!
+        //};
+        //var drawingSettings = new DrawingSettings(gBufferShaderTagId, sortingSettings)
+        //{
+        //    enableDynamicBatching = true,
+        //    enableInstancing = true,
+        //};
+        //var filteringSettings = new FilteringSettings(RenderQueueRange.all);
+        //context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);
+        //ExecuteBuffer();
     }
     void DrawVisibleGeometry(bool useDynamicBatching, bool useGPUInstancing)
     {

@@ -12,12 +12,25 @@ Shader "Custom RP/Unlit Transparent" {
 	}
 	
 	SubShader
-	{	
+	{
+		Pass {
+			Name "GBuffer"
+            Tags {
+                "LightMode" = "GBuffer"
+            }
+			HLSLPROGRAM
+			#pragma vertex GBufferPassVertex
+			#pragma fragment GBufferPassFragment
+			#include "GBufferPass.hlsl"
+			ENDHLSL
+		}
 		Pass
 		{
 			Blend [_SrcBlend] [_DstBlend]
 			ZWrite [_ZWrite]
-
+			Tags {
+				"LightMode" = "CustomUnlit"
+			}
 			HLSLPROGRAM
 			#pragma shader_feature _CLIPPING
 			#pragma multi_compile_instancing
@@ -30,6 +43,14 @@ Shader "Custom RP/Unlit Transparent" {
 
 			TEXTURE2D(_BaseMap);
 			SAMPLER(sampler_BaseMap);
+			TEXTURE2D(Rt_PositionWS);
+			SAMPLER(sampler_Rt_PositionWS);
+			TEXTURE2D(Rt_NormalWS);
+			SAMPLER(sampler_Rt_NormalWS);
+			TEXTURE2D(Rt_Albedo);
+			SAMPLER(sampler_Rt_Albedo);
+			TEXTURE2D(Rt_Depth);
+			SAMPLER(sampler_Rt_Depth);
 
 			UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 				UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)

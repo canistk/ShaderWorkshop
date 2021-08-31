@@ -6,9 +6,23 @@ Shader "Custom RP/Unlit" {
 	}
 	
 	SubShader
-	{	
+	{
+		Pass {
+			Name "GBuffer"
+            Tags {
+                "LightMode" = "GBuffer"
+            }
+			HLSLPROGRAM
+			#pragma vertex GBufferPassVertex
+			#pragma fragment GBufferPassFragment
+			#include "GBufferPass.hlsl"
+			ENDHLSL
+		}
 		Pass
 		{
+			Tags {
+				"LightMode" = "CustomUnlit"
+			}
 			HLSLPROGRAM
 			#pragma multi_compile_instancing
 			#pragma vertex UnlitPassVertex
@@ -17,9 +31,16 @@ Shader "Custom RP/Unlit" {
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
-			//CBUFFER_START(UnityPerMaterial)
-			//	float4 _BaseColor;
-			//CBUFFER_END
+			TEXTURE2D(_BaseMap);
+			SAMPLER(sampler_BaseMap);
+			TEXTURE2D(Rt_PositionWS);
+			SAMPLER(sampler_Rt_PositionWS);
+			TEXTURE2D(Rt_NormalWS);
+			SAMPLER(sampler_Rt_NormalWS);
+			TEXTURE2D(Rt_Albedo);
+			SAMPLER(sampler_Rt_Albedo);
+			TEXTURE2D(Rt_Depth);
+			SAMPLER(sampler_Rt_Depth);
 
 			UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 				UNITY_DEFINE_INSTANCED_PROP(float4, _BaseColor)
@@ -49,8 +70,10 @@ Shader "Custom RP/Unlit" {
 			float4 UnlitPassFragment (Varyings input) : SV_TARGET
 			{
 				UNITY_SETUP_INSTANCE_ID(input);
-				//return _BaseColor;
-				return UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
+				// float4 baseMap = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.baseUV);
+				float4 baseColor = UNITY_ACCESS_INSTANCED_PROP(UnityPerMaterial, _BaseColor);
+				float4 base = baseColor;
+				return base;
 			}
 
 			ENDHLSL

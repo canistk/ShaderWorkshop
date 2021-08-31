@@ -6,6 +6,14 @@
 
 TEXTURE2D(_BaseMap);
 SAMPLER(sampler_BaseMap);
+TEXTURE2D(Rt_PositionWS);
+SAMPLER(sampler_Rt_PositionWS);
+TEXTURE2D(Rt_NormalWS);
+SAMPLER(sampler_Rt_NormalWS);
+TEXTURE2D(Rt_Albedo);
+SAMPLER(sampler_Rt_Albedo);
+TEXTURE2D(Rt_Depth);
+SAMPLER(sampler_Rt_Depth);
 
 UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 	UNITY_DEFINE_INSTANCED_PROP(float4, _BaseMap_ST)

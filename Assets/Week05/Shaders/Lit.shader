@@ -17,6 +17,17 @@ Shader "Custom RP/lit"
 	SubShader
 	{
 		Pass {
+			Name "GBuffer"
+            Tags {
+                "LightMode" = "GBuffer"
+            }
+			HLSLPROGRAM
+			#pragma vertex GBufferPassVertex
+			#pragma fragment GBufferPassFragment
+			#include "GBufferPass.hlsl"
+			ENDHLSL
+		}
+		Pass {
 			Tags {
 				"LightMode" = "CustomLit"
 			}
@@ -39,7 +50,8 @@ Shader "Custom RP/lit"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/UnityInstancing.hlsl"
 			
 			#include "LitPass.hlsl"
-
+			
+			
 			ENDHLSL
 		}
 	}

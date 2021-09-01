@@ -158,10 +158,33 @@ Shader "Kit/Week06/Lit V2" // color, shadow, normal
                 OUT.positionWS = vertexInput.positionWS;
                 OUT.positionCS = vertexInput.positionCS;
                 OUT.normalWS = normalInput.normalWS;
-                OUT.tangentWS = mul((half3x3)unity_ObjectToWorld, IN.tangentOS.xyz);
+                OUT.tangentWS = mul((half3x3)UNITY_MATRIX_M, IN.tangentOS.xyz);
                 half3 binormalOS = cross(IN.normalOS, IN.tangentOS.xyz);
-                OUT.binormalWS = mul((half3x3)unity_ObjectToWorld, binormalOS);
+                OUT.binormalWS = mul((half3x3)UNITY_MATRIX_M, binormalOS);
                 return OUT;
+            }
+
+
+            half3 UnpackNormalDXT5nm (half4 packednormal)
+            {
+               half3 normal;
+               normal.xy = packednormal.wy * 2 - 1;
+            #if defined(SHADER_API_FLASH)
+               // Flash does not have efficient saturate(), and dot() seems to require an extra register.
+               normal.z = sqrt(1 - normal.x*normal.x - normal.y * normal.y);
+            #else
+               normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
+            #endif
+               return normal;
+            }
+ 
+            half3 UnpackNormal(half4 packednormal)
+            {
+            #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)) && defined(SHADER_API_MOBILE)
+               return packednormal.xyz * 2 - 1;
+            #else
+               return UnpackNormalDXT5nm(packednormal);
+            #endif
             }
 
             float4 frag(Varyings IN) : SV_Target
@@ -180,11 +203,10 @@ Shader "Kit/Week06/Lit V2" // color, shadow, normal
                     normalize(IN.binormalWS),
                     normalize(IN.normalWS)));
 
-                float3 tangentNormal = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, IN.uv).xyz;
-                tangentNormal = tangentNormal * 2.0 - 1.0; // 0 ~ 1 to -1 ~ 1 
-                float3 normalWSM = mul(TBN, tangentNormal);
+                float4 tangentNormal = SAMPLE_TEXTURE2D(_NormalMap, sampler_NormalMap, IN.uv);
+                float3 normalWSM = mul(TBN, UnpackNormal(tangentNormal));
                 if (_DebugNormal > 0)
-                    return float4(normalWSM, 1.0);
+                    return float4(normalWSM * 0.5 + 0.5, 1.0);
 
                 float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 half3 lightColor = CalcBlinnPhong(GetMainLight(shadowCoord), normalWSM);

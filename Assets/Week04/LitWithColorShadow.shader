@@ -121,14 +121,14 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
             // Lighting.hlsl > CalculateBlinnPhong() > LightingLambert()
             half3 CalcBlinnPhong(Light light, half3 normalWS)
             {
-                half NdotL = saturate(dot(normalWS, light.direction));
+                half NdotL = saturate(dot(normalWS, -normalize(light.direction)));
                 half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
                 half3 lightColor = attenuatedLightColor;
                 //#if defined(_SPECGLOSSMAP) || defined(_SPECULAR_COLOR)
                 //half smoothness = exp2(10 * surfaceData.smoothness + 1);
                 //lightColor += LightingSpecular(attenuatedLightColor, light.direction, inputData.normalWS, inputData.viewDirectionWS, half4(surfaceData.specular, 1), smoothness);
                 //#endif
-                return lightColor;
+                return lightColor * NdotL;
             }
 
             // Lighting.hlsl > GetAdditionalLight(uint i, float3 positionWS, half4 shadowMask)
@@ -265,7 +265,8 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                         {
                             half2 uv = half2(gPosOS.xy + 0.5);
                             half4 color = tex2D(quadTex, uv);
-                            half3 finColor = color.rgb * light.color * light.distanceAttenuation;
+                            half3 lightColor = light.color;
+                            half3 finColor = color.rgb * lightColor * light.distanceAttenuation;
                             return half4(finColor, color.a);
                         }
 				    }

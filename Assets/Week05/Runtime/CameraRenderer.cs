@@ -65,6 +65,7 @@ public partial class CameraRenderer
 
     private void ApplyCameraCleanFlag(Camera camera)
     {
+        cmd.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
         CameraClearFlags flags = camera.clearFlags;
         cmd.ClearRenderTarget(
             flags <= CameraClearFlags.Depth,
@@ -90,7 +91,7 @@ public partial class CameraRenderer
         const string _cmdName = "Render_GBuffer";
         cmd.name = _cmdName;
         cmd.BeginSample(_cmdName);
-        RenderTextureDescriptor descriptor = new RenderTextureDescriptor(camera.pixelWidth, camera.pixelHeight, RenderTextureFormat.Default, 24, 0);
+        RenderTextureDescriptor descriptor = new RenderTextureDescriptor(camera.pixelWidth, camera.pixelHeight, RenderTextureFormat.Default, 0);
         cmd.GetTemporaryRT(GBuffer.positionWSHash, descriptor, FilterMode.Point);
         cmd.GetTemporaryRT(GBuffer.normalWSHash, descriptor, FilterMode.Point);
         cmd.GetTemporaryRT(GBuffer.albedoHash, descriptor, FilterMode.Point);
@@ -108,7 +109,10 @@ public partial class CameraRenderer
             enableDynamicBatching = true,
             enableInstancing = true,
         };
-        var filteringSettings = new FilteringSettings(RenderQueueRange.opaque);
+        var filteringSettings = new FilteringSettings(RenderQueueRange.opaque)
+        {
+            layerMask = camera.cullingMask,
+        };
         context.ExecuteCommandBuffer(cmd);
         cmd.Clear();
         context.DrawRenderers(cullingResults, ref drawingSettings, ref filteringSettings);

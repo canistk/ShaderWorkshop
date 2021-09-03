@@ -28,18 +28,19 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _BottleY: 1.78
     - _DebugNormal: 0
     - _DebugShadow: 0
-    - _FillAmount: -0.5
-    - _MaxLightSrc: 0
+    - _FillAmount: 0.35
+    - _MaxLightSrc: 4
     - _NormalWeight: 1
-    - _Rim: 0.0083
-    - _RimPower: 4.21
+    - _Rim: 0.006
+    - _RimPower: 2
     - _WobbleX: 0
     - _WobbleZ: 0
     m_Colors:
-    - _Color: {r: 0.6603774, g: 0.6240835, b: 0.26477396, a: 1}
-    - _FoamColor: {r: 0.59337753, g: 0.764151, b: 0.38568, a: 1}
-    - _RimColor: {r: 0.33962262, g: 0.25696546, b: 0.049661797, a: 1}
-    - _TopColor: {r: 0.5427242, g: 0.7924528, b: 0.3999644, a: 1}
+    - _Color: {r: 0.4528302, g: 0.37881702, b: 0.10893556, a: 1}
+    - _FoamColor: {r: 0.68468535, g: 0.7075471, b: 0.25031146, a: 1}
+    - _RimColor: {r: 0.5224988, g: 0.5943396, b: 0.103729, a: 1}
+    - _TopColor: {r: 0.8798963, g: 0.8867924, b: 0.50614095, a: 1}
   m_BuildTextureStacks: []

@@ -7,8 +7,8 @@ Shader "Kit/Week06/Fake Liquid"
         _Color("Color", color) = (0.5,0.5,0.5,0.5)
 
         _FillAmount ("Fill Amount", Range(-10,10)) = 0.0
-        _WobbleX ("WobbleX", Range(-1,1)) = 0.0
-		 _WobbleZ ("WobbleZ", Range(-1,1)) = 0.0
+        [HideInInspector] _WobbleX ("WobbleX", Range(-1,1)) = 0.0
+		[HideInInspector] _WobbleZ ("WobbleZ", Range(-1,1)) = 0.0
         _TopColor ("Top Color", Color) = (1,1,1,1)
 		_FoamColor ("Foam Line Color", Color) = (1,1,1,1)
         _Rim ("Foam Line Width", Range(0,0.1)) = 0.0    
@@ -203,7 +203,7 @@ Shader "Kit/Week06/Fake Liquid"
                 // rotate around XZ
                 half3 worldPosZ = half3(worldPos.y, worldPos.z, worldPos.x);
                 // combine rotations with worldPos, based on sine wave from script
-                half3 worldPosAdjusted = worldPos + (worldPosX  * _WobbleX)+ (worldPosZ * _WobbleZ);
+                half3 worldPosAdjusted = worldPos + (worldPosX  * _WobbleX) + (worldPosZ * _WobbleZ);
                 // how high up the liquid is
                 OUT.fillEdge = worldPosAdjusted.y + _FillAmount;
                 half3 vs = vertexInput.positionVS.xyz;

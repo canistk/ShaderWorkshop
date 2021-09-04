@@ -4,21 +4,23 @@ Shader "Kit/Week06/Fake Liquid V2"
 {
     Properties
     {
-        _MainTex("Texture", 2D) = "white" {}
-        _Color("Color", color) = (0.5,0.5,0.5,0.5)
-
         [header(Liquid)]
-        _FillAmount ("Fill Amount", Range(-10,10)) = 0.0
-        [HideInInspector] _WobbleX ("WobbleX", Range(-1,1)) = 0.0
-		[HideInInspector] _WobbleZ ("WobbleZ", Range(-1,1)) = 0.0
         _FoamTex("Foam Texture", 2D) = "white" {}
         _TopColor ("Top Color", Color) = (1,1,1,1)
 		_FoamColor ("Foam Line Color", Color) = (1,1,1,1)
+        _MainTex("Texture", 2D) = "white" {}
+        _Color("Color", color) = (0.5,0.5,0.5,0.5)
+
+        [header(Style)]
+        _FillAmount ("Fill Amount", Range(-10,10)) = 0.0
         _Rim ("Foam Line Width", Range(0,0.1)) = 0.0    
 		_RimColor ("Rim Color", Color) = (1,1,1,1)
 	    _RimPower ("Rim Power", Range(-1,1)) = 0.0
         _Refractive ("Refractive", Range(-1,1)) = 0.0
         _BumpWeight ("Bump", vector) = (0.2, 0.2, 1.0, 0.5)
+
+        [HideInInspector] _WobbleX ("WobbleX", Range(-1,1)) = 0.0
+		[HideInInspector] _WobbleZ ("WobbleZ", Range(-1,1)) = 0.0
     }
 
     SubShader
@@ -68,13 +70,9 @@ Shader "Kit/Week06/Fake Liquid V2"
             TEXTURE2D(_CameraOpaqueTexture); SAMPLER(sampler_CameraOpaqueTexture);
             CBUFFER_START(UnityPerMaterial)
                 half4   _Color;
-
-                half4   _LightColor;
-                half4   _LightSetting; // x = Range, y = Intensity, z = Inner angle, w = outter angle
                 half4   _TopColor;
                 half4   _RimColor;
                 half4   _FoamColor;
-                half4   _Tint;
                 half4   _BumpWeight; // xyz-control bump vector, w control the twit between 2 refractive sampler
 
                 half    _FillAmount;

@@ -24,7 +24,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 12abecb221e55744fb214d1096f14fa5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
@@ -35,18 +35,18 @@ Material:
     - _BottleY: 1.78
     - _DebugNormal: 0
     - _DebugShadow: 0
-    - _FillAmount: 0.1
+    - _FillAmount: -0.35
     - _MaxLightSrc: 4
     - _NormalWeight: 1
-    - _Refractive: 0.61
-    - _Rim: 0.0318
-    - _RimPower: 0.38
+    - _Refractive: -0.24
+    - _Rim: 0.0252
+    - _RimPower: 0.46
     - _WobbleX: 0
     - _WobbleZ: 0
     m_Colors:
-    - _BumpWeight: {r: 0.04, g: 0.21, b: 0.4, a: 0.75}
-    - _Color: {r: 0.8980392, g: 0.7647059, b: 0.3490196, a: 0.56078434}
-    - _FoamColor: {r: 1, g: 0.9599057, b: 0.8349056, a: 0.56078434}
+    - _BumpWeight: {r: 0.04, g: 0.21, b: 0.4, a: 0.33}
+    - _Color: {r: 0.8980392, g: 0.7647059, b: 0.34901956, a: 0.14901961}
+    - _FoamColor: {r: 1, g: 0.9599057, b: 0.8349056, a: 0.28235295}
     - _RimColor: {r: 0.9056604, g: 0.20932718, b: 0.20932718, a: 0.89411765}
     - _TopColor: {r: 1, g: 0.9607843, b: 0.8352941, a: 0.56078434}
   m_BuildTextureStacks: []

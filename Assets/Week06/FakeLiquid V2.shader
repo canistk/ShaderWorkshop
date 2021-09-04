@@ -37,7 +37,7 @@ Shader "Kit/Week06/Fake Liquid V2"
         LOD 300
         Zwrite On
         Cull Off
-        AlphaToMask On
+        // AlphaToMask On
 
         Pass
         {
@@ -184,6 +184,10 @@ Shader "Kit/Week06/Fake Liquid V2"
 
             half4 frag(Varyings IN, half facing : VFACE) : SV_Target
             {
+                half4 fillMask = step(IN.fillEdge, 0.5);
+                if (fillMask.a < 1.0)
+                    discard;
+
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
                 
@@ -236,16 +240,14 @@ Shader "Kit/Week06/Fake Liquid V2"
                 // return disolvedSceneColor; // debug
 
                 // --- Liquid stuff
+
                 // foam edge
-                half4 foamMask = ( step(IN.fillEdge, 0.5) - step(IN.fillEdge, (0.5 - _Rim)));
+                half4 foamMask = ( fillMask - step(IN.fillEdge, (0.5 - _Rim)));
                 half4 foamTex = SAMPLE_TEXTURE2D(_FoamTex, sampler_FoamTex, IN.uv);
                 half3 foamColor = lerp(vRefrA.rgb, foamTex.rgb * _FoamColor.rgb, _FoamColor.a) + (lightColor.rgb * (_FoamColor.a));
                 half4 foamColored = foamMask * half4(foamColor, 1);
 
-                // rest of the liquid
-                half4 fillMask = step(IN.fillEdge, 0.5);
-                //if (fillMask.a < 1.0)
-                //    discard;
+                // rest of the liquid                
                 half4 liquidMask = fillMask - foamMask;
                 half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv) * _Color;
                 half3 mixBg = lerp(disolvedSceneColor.rgb, texColor.rgb, _Color.a);

@@ -1,5 +1,6 @@
 // Study Ref : https://www.patreon.com/posts/shader-part-2-24996282
-Shader "Kit/Week06/Fake Liquid"
+// Study Ref : https://developer.nvidia.com/gpugems/gpugems2/part-ii-shading-lighting-and-shadows/chapter-19-generic-refraction-simulation
+Shader "Kit/Week06/Fake Liquid V2"
 {
     Properties
     {
@@ -10,24 +11,26 @@ Shader "Kit/Week06/Fake Liquid"
         _FillAmount ("Fill Amount", Range(-10,10)) = 0.0
         [HideInInspector] _WobbleX ("WobbleX", Range(-1,1)) = 0.0
 		[HideInInspector] _WobbleZ ("WobbleZ", Range(-1,1)) = 0.0
+        _FoamTex("Foam Texture", 2D) = "white" {}
         _TopColor ("Top Color", Color) = (1,1,1,1)
 		_FoamColor ("Foam Line Color", Color) = (1,1,1,1)
         _Rim ("Foam Line Width", Range(0,0.1)) = 0.0    
 		_RimColor ("Rim Color", Color) = (1,1,1,1)
 	    _RimPower ("Rim Power", Range(-1,1)) = 0.0
-        _Refractive ("Refractive", float) = 0.0
-
+        _Refractive ("Refractive", Range(-1,1)) = 0.0
+        _BumpWeight ("Bump", vector) = (0.2, 0.2, 1.0, 0.5)
     }
 
     SubShader
     {
         // https://docs.unity3d.com/Manual/SL-SubShaderTags.html
         Tags {
-            "RenderType" = "Geometry"
+            "RenderType" = "Opaque"
             "RenderPipeline" = "UniversalRenderPipeline"
-            "Queue" = "Geometry"
+            // "Queue" = "Geometry"
+            "Queue" = "Transparent-498" // Remark, -499 will not display in CameraOpaqueTexture
             "DisableBatching" = "True"
-            "UniversalMaterialType" = "Lit"
+            // "UniversalMaterialType" = "Lit"
         }
         LOD 300
         Zwrite On
@@ -36,17 +39,13 @@ Shader "Kit/Week06/Fake Liquid"
 
         Pass
         {
-            Name "ForwardLit"
-            Tags {
-                "LightMode" = "UniversalForward"
-            }
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
             
             //#pragma multi_compile_fog
-            // #pragma target 3.0
+            #pragma target 3.0
 
             // The Core.hlsl file contains definitions of frequently used HLSL
             // macros and functions, and also contains #include references to other
@@ -64,31 +63,32 @@ Shader "Kit/Week06/Fake Liquid"
             // #include "Packages/com.unity.render-pipelines.universal/Shaders/LitForwardPass.hlsl"
             // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl
 
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-            TEXTURE2D(_CameraOpaqueTexture);
-            SAMPLER(sampler_CameraOpaqueTexture);
+            TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+            TEXTURE2D(_FoamTex); SAMPLER(sampler_FoamTex);
+            TEXTURE2D(_CameraOpaqueTexture); SAMPLER(sampler_CameraOpaqueTexture);
             CBUFFER_START(UnityPerMaterial)
-                float4          _Color;
+                half4   _Color;
 
-                float4          _LightColor;
-                float4          _LightSetting; // x = Range, y = Intensity, z = Inner angle, w = outter angle
-                float4          _TopColor;
-                float4          _RimColor;
-                float4          _FoamColor;
-                float4          _Tint;
+                half4   _LightColor;
+                half4   _LightSetting; // x = Range, y = Intensity, z = Inner angle, w = outter angle
+                half4   _TopColor;
+                half4   _RimColor;
+                half4   _FoamColor;
+                half4   _Tint;
+                half4   _BumpWeight; // xyz-control bump vector, w control the twit between 2 refractive sampler
 
-                float           _FillAmount;
-                float           _WobbleX;
-                float           _WobbleZ;
-                float           _Rim;
-                float           _RimPower;
+                half    _FillAmount;
+                half    _WobbleX;
+                half    _WobbleZ;
+                half    _Rim;
+                half    _RimPower;
+                half    _Refractive;
             CBUFFER_END
             
 
             half4 RotateAroundYInDegrees (half4 vertex, half degrees)
             {
-                // const float PI = 3.141592653589793238462;
+                // const half PI = 3.141592653589793238462;
                 // half alpha = degrees * 3.14159 / 180;
                 half alpha = degrees * 0.0174532925199433;
                 half sina, cosa;
@@ -99,23 +99,21 @@ Shader "Kit/Week06/Fake Liquid"
 
             struct Attributes
             {
-                float4  positionOS  : POSITION;
+                half4  positionOS  : POSITION;
                 half3   normalOS    : NORMAL;
-                float4  tangentOS   : TANGENT;
+                half4  tangentOS   : TANGENT;
                 half2  uv          : TEXCOORD0;
-                // half2  lightmapUV  : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
-                float4 positionCS               : SV_POSITION;
-                float3 positionWS               : TEXCOORD0;
-                half2 uv                        : TEXCOORD1;
+                half4 positionCS               : SV_POSITION;
+                half3 positionWS               : TEXCOORD0;
+                half2 uv                        : TEXCOORD2;
                 half3 normalWS                  : TEXCOORD3;
-                half4 positionHCS               : TEXCOORD4;
-                float fillEdge                  : TEXCOORD7;
-                float3 viewDir                  : COLOR;
+                half fillEdge                  : TEXCOORD4;
+                half3 viewDir                  : COLOR;
 
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
@@ -143,8 +141,8 @@ Shader "Kit/Week06/Fake Liquid"
                 return lightColor * NdotL;
             }
 
-            // Lighting.hlsl > GetAdditionalLight(uint i, float3 positionWS, half4 shadowMask)
-            half CalcAdditionalShadow(half2 uv, int lightIndex, float3 positionWS)
+            // Lighting.hlsl > GetAdditionalLight(uint i, half3 positionWS, half4 shadowMask)
+            half CalcAdditionalShadow(half2 uv, int lightIndex, half3 positionWS)
             {
                 int perObjectLightIndex = GetPerObjectLightIndex(lightIndex);
 #if USE_STRUCTURED_BUFFER_FOR_LIGHT_DATA
@@ -165,15 +163,11 @@ Shader "Kit/Week06/Fake Liquid"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(OUT);
                 VertexPositionInputs vertexInput = GetVertexPositionInputs(IN.positionOS.xyz);
                 VertexNormalInputs normalInput = GetVertexNormalInputs(IN.normalOS, IN.tangentOS);
-                half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS; // calculate here cheaper then fragment shader.
-                //half3 vertexLight = VertexLighting(vertexInput.positionWS, normalInput.normalWS);
-                //half fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
 
                 OUT.uv = IN.uv;
                 half3 worldPos = vertexInput.positionWS;
                 OUT.positionWS = worldPos;
                 OUT.positionCS = vertexInput.positionCS;
-                OUT.positionHCS = ComputeScreenPos(vertexInput.positionCS);
                 OUT.normalWS = normalInput.normalWS;
                 
                 // rotate it around XY
@@ -184,51 +178,104 @@ Shader "Kit/Week06/Fake Liquid"
                 half3 worldPosAdjusted = worldPos + (worldPosX  * _WobbleX) + (worldPosZ * _WobbleZ);
                 // how high up the liquid is
                 OUT.fillEdge = worldPosAdjusted.y + _FillAmount;
+
+                half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS; // calculate here cheaper then fragment shader.
                 OUT.viewDir = normalize(viewDirWS);
                 return OUT;
             }
 
-            float4 frag(Varyings IN, half facing : VFACE) : SV_Target
+            half4 frag(Varyings IN, half facing : VFACE) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
-                float4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv) * _Color;
-
-                float4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
+                
+                // --- Light ---
+                half4 shadowCoord = TransformWorldToShadowCoord(IN.positionWS);
                 half3 lightColor = CalcBlinnPhong(GetMainLight(shadowCoord), IN.normalWS);
                 
-                half4 addShadowDebug = half4(1,1,1,1);
                 int cnt = GetAdditionalLightsCount();
-                for (int i=0; i<cnt; i++)
+                for (int i = 0; i < cnt; i++)
                 {
                     // Directional lights store direction in lightPosition.xyz and have .w set to 0.0.
                     // This way the following code will work for both directional and punctual lights.
                     Light light = GetAdditionalPerObjectLight(i, IN.positionWS);
                     light.shadowAttenuation = CalcAdditionalShadow(IN.uv, i, IN.positionWS);
-                    addShadowDebug *= light.shadowAttenuation;
                     lightColor.rgb += CalcBlinnPhong(light, IN.normalWS);
                 }
-                half4 col = half4(lightColor.rgb * texColor.rgb, 1.0);
 
                 // rim light
-                half dotProduct = dot(IN.normalWS, normalize(IN.viewDir));
-                half3 RimResult = 1 - smoothstep(_RimPower, 1.0, dotProduct);
-                RimResult *= (_RimColor.rgb * _RimColor.a);
+		        // half dotProduct = 1 - pow(abs(dot(IN.normalWS, normalize(IN.viewDir))), _RimPower);
+                half dotProduct = dot(IN.normalWS, IN.viewDir);
+                half Rim = 1.0 - smoothstep(_RimPower, 1.0, dotProduct);
+                half3 RimResult = (_RimColor.rgb * _RimColor.a) * Rim;
 
+                // To calculate the UV coordinates for sampling the depth buffer,
+                // divide the pixel location by the render target resolution
+                // _ScaledScreenParams.
+                half2 screenUV = IN.positionCS.xy / _ScaledScreenParams.xy;
+                half4 sceneColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV);
+
+                // Scene Refractive
+                // https://en.wikibooks.org/wiki/Cg_Programming/Unity/Curved_Glass
+                //half refractiveIndex = 1.5;
+                //half3 refractedDir = refract(normalize(IN.viewDir), normalize(IN.normalWS), 1.0 / refractiveIndex);
+                //return texCUBE(_Cube, refractedDir);
+
+                // Scene Refractive Screen Space - cheaper
+                // https://developer.nvidia.com/gpugems/gpugems2/part-ii-shading-lighting-and-shadows/chapter-19-generic-refraction-simulation
+                half refractive = smoothstep(_Refractive, 1.0, dotProduct); //Rim * 0.5 + 0.5; //1.0 - (2.0 - Rim - 1.0);
+                half3 vEye = normalize(IN.viewDir);
+                half3 bumpNormal = lerp(IN.normalWS, vEye, refractive);
+                half3 vBump = normalize(bumpNormal * _BumpWeight.xyz); // suggested : half3(0.2, 0.2, 1.0));
+                half4 vRefrA = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV + vBump.xy * _BumpWeight.w); // to control how twist of the image. suggested : 0.5);
+	            half4 vRefrB = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV + vBump.xy);      // Mask occluders from refraction map
+                
+                // Reflection, require cube map.
+                // half LdotN = dot(bumpNormal, vEye);
+                // half3 vReflect = 2.0 * LdotN * vBump.xyz - vEye;      // Reflection vector coordinates used for environmental mapping    
+                // half4 vEnvMap = tex2D(cubeTex3, (vReflect.xy + 1.0) * 0.5);      // Compute projected coordinates and add perturbation 
+	            half4 disolvedSceneColor = lerp(vRefrA, vRefrB, refractive); // Compute Fresnel term      
+                // return disolvedSceneColor; // debug
+
+                // --- Liquid stuff
                 // foam edge
-                half4 foam = ( step(IN.fillEdge, 0.5) - step(IN.fillEdge, (0.5 - _Rim)))  ;
-                half4 foamColored = foam * (_FoamColor * 0.9);
+                half4 foamMask = ( step(IN.fillEdge, 0.5) - step(IN.fillEdge, (0.5 - _Rim)));
+                half4 foamTex = SAMPLE_TEXTURE2D(_FoamTex, sampler_FoamTex, IN.uv);
+                half3 foamColor = lerp(vRefrA.rgb, foamTex.rgb * _FoamColor.rgb, _FoamColor.a) + (lightColor.rgb * (_FoamColor.a));
+                half4 foamColored = foamMask * half4(foamColor, 1);
+
                 // rest of the liquid
-                half4 result = step(IN.fillEdge, 0.5) - foam;
-                half4 resultColored = result * col;
+                half4 fillMask = step(IN.fillEdge, 0.5);
+                //if (fillMask.a < 1.0)
+                //    discard;
+                half4 liquidMask = fillMask - foamMask;
+                half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv) * _Color;
+                half3 mixBg = lerp(disolvedSceneColor.rgb, texColor.rgb, _Color.a);
+                // half4 liquidColor = half4(lerp(mixBg, lightColor, _Color.a), 1); // liquid had 100% transparent will not catch light.
+                // half4 liquidColor = half4(mixBg + (lightColor.rgb * (1.0 - _Color.a)), 1.0);
+                half3 liquidColor = mixBg + (lightColor.rgb * (_Color.a));
+                half4 liquidColored = liquidMask * half4(liquidColor, 1);
+
+                // bottle debug layer
+                //half4 emptyBottleMask = 1.0 - fillMask;
+                //half4 emptyBottleColor = emptyBottleMask * sceneColor;
+                //return emptyBottleMask * half4(1,0,0,1) +
+                //        foamMask * half4(0,0,1,1) +
+                //        liquidMask * half4(0,1,0,1);
+
                 // both together, with the texture
-                half4 finalResult = resultColored + foamColored;				
-                finalResult.rgb += RimResult.rgb;
- 
-                // color of backfaces/ top
-                half4 topColor = _TopColor * (foam + result);
+                half4 finalResult = liquidColored + foamColored;
+                finalResult.rgb += RimResult;
+                
+                // color of backfaces / top
+                // half4 topFoamColor = fillMask * _TopColor;
+                // half4 topFoamColor = lerp(fillMask * _TopColor, vRefrB, _TopColor.a);
+                // half4 liquidColor = half4(mixBg + (lightColor.rgb * (1.0 - _Color.a)), 1.0);
+                half3 topFoamColor = lerp(vRefrA.rgb, foamTex.rgb * _TopColor.rgb, _TopColor.a)  + (lightColor.rgb * (_TopColor.a));
+                half4 topFoamColored = fillMask * half4(topFoamColor, 1);
+                
                 //VFACE returns positive for front facing, negative for backfacing
-                half4 fakeLiquidColor = facing > 0 ? finalResult: topColor;
+                half4 fakeLiquidColor = facing > 0 ? finalResult : topFoamColored;
 
                 return fakeLiquidColor;
             }

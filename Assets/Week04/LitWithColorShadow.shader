@@ -266,7 +266,8 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                             half2 uv = half2(gPosOS.xy + 0.5);
                             half4 color = tex2D(quadTex, uv);
                             half3 lightColor = light.color;
-                            half3 finColor = color.rgb * lightColor * light.distanceAttenuation;
+                            half distanceAttenuation = light.distanceAttenuation;
+                            half3 finColor = color.rgb * lightColor * distanceAttenuation;
                             return half4(finColor, color.a);
                         }
 				    }
@@ -317,7 +318,7 @@ Shader "Kit/Universal Render Pipeline/Lit With Color Shadow"
                 // Fake Glass session
                 if (_HadGlass == 1)
                 {
-                    half3 glassPosWS = mul(_GlassMatrixLocalToWorld, half4(0,0,0,1));
+                    half3 glassPosWS = mul(_GlassMatrixLocalToWorld, half4(0,0,0,1)).xyz;
                     half3 glassFacing = mul((half3x3)_GlassMatrixLocalToWorld, half3(0,0,1));
 
                     half3 toLightVector = lightPosWS.xyz - IN.positionWS;

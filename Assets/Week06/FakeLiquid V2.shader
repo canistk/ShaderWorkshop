@@ -11,8 +11,10 @@ Shader "Kit/Week06/Fake Liquid V2"
         _MainTex("Texture", 2D) = "white" {}
         _Color("Color", color) = (0.5,0.5,0.5,0.5)
 
+        [header(State)]
+        _LiquidLevel ("Liquid level(WS)", Range(-10,10)) = 0.0
+
         [header(Style)]
-        _FillAmount ("Fill Amount", Range(-10,10)) = 0.0
         _Rim ("Foam Line Width", Range(0,0.1)) = 0.0    
 		_RimColor ("Rim Color", Color) = (1,1,1,1)
 	    _RimPower ("Rim Power", Range(-1,1)) = 0.0
@@ -21,6 +23,7 @@ Shader "Kit/Week06/Fake Liquid V2"
 
         [HideInInspector] _WobbleX ("WobbleX", Range(-1,1)) = 0.0
 		[HideInInspector] _WobbleZ ("WobbleZ", Range(-1,1)) = 0.0
+        _RotationHotfix ("Adjust Liquid level during rotation", float) = 0.0
     }
 
     SubShader
@@ -75,12 +78,14 @@ Shader "Kit/Week06/Fake Liquid V2"
                 half4   _FoamColor;
                 half4   _BumpWeight; // xyz-control bump vector, w control the twit between 2 refractive sampler
 
-                half    _FillAmount;
-                half    _WobbleX;
-                half    _WobbleZ;
                 half    _Rim;
                 half    _RimPower;
                 half    _Refractive;
+
+                half    _LiquidLevel;
+                half    _RotationHotfix;
+                half    _WobbleX;
+                half    _WobbleZ;
             CBUFFER_END
             
 
@@ -175,7 +180,7 @@ Shader "Kit/Week06/Fake Liquid V2"
                 // combine rotations with worldPos, based on sine wave from script
                 half3 worldPosAdjusted = worldPos + (worldPosX  * _WobbleX) + (worldPosZ * _WobbleZ);
                 // how high up the liquid is
-                OUT.fillEdge = worldPosAdjusted.y + _FillAmount;
+                OUT.fillEdge = worldPosAdjusted.y;
 
                 half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS; // calculate here cheaper then fragment shader.
                 OUT.viewDir = normalize(viewDirWS);
@@ -184,7 +189,8 @@ Shader "Kit/Week06/Fake Liquid V2"
 
             half4 frag(Varyings IN, half facing : VFACE) : SV_Target
             {
-                half4 fillMask = step(IN.fillEdge, 0.5);
+                half edge = _LiquidLevel + _RotationHotfix;
+                half4 fillMask = step(IN.fillEdge, edge);
                 if (fillMask.a < 1.0)
                     discard;
 
@@ -242,7 +248,7 @@ Shader "Kit/Week06/Fake Liquid V2"
                 // --- Liquid stuff
 
                 // foam edge
-                half4 foamMask = ( fillMask - step(IN.fillEdge, (0.5 - _Rim)));
+                half4 foamMask = ( fillMask - step(IN.fillEdge, (edge - _Rim)));
                 half4 foamTex = SAMPLE_TEXTURE2D(_FoamTex, sampler_FoamTex, IN.uv);
                 half3 foamColor = lerp(vRefrA.rgb, foamTex.rgb * _FoamColor.rgb, _FoamColor.a) + (lightColor.rgb * (_FoamColor.a));
                 half4 foamColored = foamMask * half4(foamColor, 1);

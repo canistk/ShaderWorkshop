@@ -35,12 +35,14 @@ Material:
     - _BottleY: 1.78
     - _DebugNormal: 0
     - _DebugShadow: 0
-    - _FillAmount: 0.2
+    - _FillAmount: 0.9
+    - _LiquidLevel: 0.1
     - _MaxLightSrc: 4
     - _NormalWeight: 1
     - _Refractive: 0.38
-    - _Rim: 0.0252
+    - _Rim: 0.008
     - _RimPower: 0.26
+    - _RotationHotfix: 0
     - _WobbleX: 0
     - _WobbleZ: 0
     m_Colors:

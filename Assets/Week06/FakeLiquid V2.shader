@@ -236,7 +236,7 @@ Shader "Kit/Week06/Fake Liquid V2"
                 half3 bumpNormal = lerp(IN.normalWS, vEye, refractive);
                 half3 vBump = normalize(bumpNormal * _BumpWeight.xyz); // suggested : half3(0.2, 0.2, 1.0));
                 half4 vRefrA = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV + vBump.xy * _BumpWeight.w); // to control how twist of the image. suggested : 0.5);
-	            half4 vRefrB = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV + vBump.xy);      // Mask occluders from refraction map
+	            half4 vRefrB = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV - vBump.xy);      // Mask occluders from refraction map
                 
                 // Reflection, require cube map.
                 // half LdotN = dot(bumpNormal, vEye);

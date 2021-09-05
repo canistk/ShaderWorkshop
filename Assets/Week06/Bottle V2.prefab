@@ -40,31 +40,40 @@ MonoBehaviour:
     m_Curve:
     - serializedVersion: 3
       time: -1
-      value: -0.2
-      inSlope: 0.20766844
-      outSlope: 0.20766844
+      value: -0.1
+      inSlope: 0.0940433
+      outSlope: 0.0940433
       tangentMode: 0
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.09845561
+      outWeight: 0.1660232
+    - serializedVersion: 3
+      time: 0
+      value: 0.012
+      inSlope: 0.105000004
+      outSlope: 0.105000004
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
     - serializedVersion: 3
       time: 1
-      value: 0.8
-      inSlope: 0.66979134
-      outSlope: 0.66979134
-      tangentMode: 0
+      value: 0.11
+      inSlope: 0.098
+      outSlope: 0.098
+      tangentMode: 34
       weightedMode: 0
-      inWeight: 0.08880308
+      inWeight: 0.33333334
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  m_AdjustmentMultiplier: 0.2
+  m_AdjustmentMultiplier: 1
   m_WobbleAmountX: 0
   m_WobbleAmountZ: 0
   m_MaxWobble: 0.003
   m_WobbleSpeed: 0.8
-  m_Recovery: 1
+  m_Recovery: 1.2
 --- !u!64 &3302527568621152939
 MeshCollider:
   m_ObjectHideFlags: 0

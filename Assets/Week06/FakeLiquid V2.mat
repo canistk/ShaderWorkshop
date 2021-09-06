@@ -36,7 +36,7 @@ Material:
     - _DebugNormal: 0
     - _DebugShadow: 0
     - _FillAmount: 0.9
-    - _LiquidLevel: 1
+    - _LiquidLevel: 0.13
     - _MaxLightSrc: 4
     - _NormalWeight: 1
     - _Refractive: 0.4
@@ -49,6 +49,6 @@ Material:
     - _BumpWeight: {r: 0.2, g: 0.2, b: 1.5, a: 0.5}
     - _Color: {r: 0.8980392, g: 0.7647059, b: 0.34901956, a: 0.14901961}
     - _FoamColor: {r: 1, g: 0.9599057, b: 0.8349056, a: 0.4745098}
-    - _RimColor: {r: 0.9056604, g: 0.20932718, b: 0.20932718, a: 0.89411765}
-    - _TopColor: {r: 1, g: 0.96078426, b: 0.8352941, a: 1}
+    - _RimColor: {r: 0.96570563, g: 0.7971698, b: 1, a: 0.89411765}
+    - _TopColor: {r: 1, g: 0, b: 0.08701134, a: 1}
   m_BuildTextureStacks: []

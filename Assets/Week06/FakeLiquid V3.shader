@@ -42,6 +42,8 @@ Shader "Kit/Week06/Fake Liquid V3"
         }
         LOD 300
         Zwrite On
+        Cull Off
+        AlphaToMask On
 
         Pass
         {
@@ -115,7 +117,7 @@ Shader "Kit/Week06/Fake Liquid V3"
             {
                 half4 positionCS               : SV_POSITION;
                 half3 positionWS               : TEXCOORD0;
-                half2 uv                        : TEXCOORD2;
+                half4 uv                        : TEXCOORD2; // xz = normal uv, zw = bias world space uv
                 half3 normalWS                  : TEXCOORD3;
                 half fillEdge                  : TEXCOORD4;
                 half3 viewDir                  : COLOR;
@@ -179,22 +181,28 @@ Shader "Kit/Week06/Fake Liquid V3"
                 half3 worldPosAdjusted = worldPos + (worldPosX  * _WobbleX) + (worldPosZ * _WobbleZ);
                 // how high up the liquid is
                 OUT.fillEdge = worldPosAdjusted.y;
-                half3 viewDirWS = GetCameraPositionWS() - worldPos; // calculate here cheaper then fragment shader.
-                OUT.viewDir = normalize(viewDirWS);
+                OUT.normalWS = normalInput.normalWS;
 
-                // OUT.positionWS = worldPos;
-                // Project the upper empty bottle area to liquid level.
-                // since we bias world up we can calculate it by float(y-axis)
+                // calculate the UV based on camera view
                 half edge = _LiquidLevel + _RotationHotfix;
-                half pFlag = step(worldPosAdjusted.y, edge); // 1 = vertex need to project
-                half pDistance = worldPosAdjusted.y - edge;
-                half3 projectedPosWS = worldPosAdjusted;
-                projectedPosWS.y -= pDistance;
+                half distanceY = edge - worldPos.y;
+                half3 camPos = GetCameraPositionWS();
+                half3 viewDirWS = normalize(camPos - worldPos);
 
-                OUT.normalWS = lerp(normalize(worldPosAdjusted), normalInput.normalWS, pFlag);
-                OUT.positionWS = lerp(projectedPosWS, worldPos, pFlag);
+                // Convert UV into world space and bias on liquid surface level.
+                // AKA : locate the surface position of liquid from Backface UV.
+                half3 surfacePosWS = worldPos + viewDirWS * distanceY;
+                half3 p = surfacePosWS + half3(0,1,0) * length(surfacePosWS);
+                half2 projectUV = frac(half2(p.x,p.z)) * 5; // UV bias
+
+                OUT.uv = half4(IN.uv, projectUV);
+                OUT.viewDir = normalize(camPos - surfacePosWS);
+                OUT.positionWS = worldPos;
                 OUT.positionCS = mul(UNITY_MATRIX_VP, half4(OUT.positionWS, 1));
-                OUT.uv = lerp(frac(half2(worldPos.x, worldPos.z) * 10), IN.uv, pFlag);
+                // Project vertex to surface.
+                //half pFlag = saturate(step(worldPosAdjusted.y, edge)); // 1 = vertex need to project
+                //OUT.positionWS = lerp(projectedPosWS, worldPos, pFlag);
+                
                 return OUT;
             }
 
@@ -218,7 +226,7 @@ Shader "Kit/Week06/Fake Liquid V3"
                     // Directional lights store direction in lightPosition.xyz and have .w set to 0.0.
                     // This way the following code will work for both directional and punctual lights.
                     Light light = GetAdditionalPerObjectLight(i, IN.positionWS);
-                    light.shadowAttenuation = CalcAdditionalShadow(IN.uv, i, IN.positionWS);
+                    light.shadowAttenuation = CalcAdditionalShadow(IN.uv.xy, i, IN.positionWS);
                     lightColor.rgb += CalcBlinnPhong(light, IN.normalWS);
                 }
                 half3 ImpuritiesLight = lightColor * _Impurities;
@@ -233,7 +241,8 @@ Shader "Kit/Week06/Fake Liquid V3"
                 // divide the pixel location by the render target resolution
                 // _ScaledScreenParams.
                 half2 screenUV = IN.positionCS.xy / _ScaledScreenParams.xy;
-                half4 sceneColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV);
+                //half4 sceneColor = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, screenUV);
+                //return sceneColor;
 
                 // Scene Refractive
                 // https://en.wikibooks.org/wiki/Cg_Programming/Unity/Curved_Glass
@@ -259,13 +268,15 @@ Shader "Kit/Week06/Fake Liquid V3"
 
                 // --- Liquid stuff
                 // foam surface layer
-                half4 emptyBottleMask = 1.0 - fillMask;
-                half4 foamTex = SAMPLE_TEXTURE2D(_FoamTex, sampler_FoamTex, IN.uv);
-                half4 topFoamColor = foamTex * _TopColor;
-                topFoamColor.rgb = lerp(vRefrA.rgb, topFoamColor.rgb, topFoamColor.a) + ImpuritiesLight;
-                half4 topFoamColored = emptyBottleMask * topFoamColor;
+                // half4 emptyBottleMask = 1.0 - fillMask;
+                half4 foamSurfaceTex = SAMPLE_TEXTURE2D(_FoamTex, sampler_FoamTex, IN.uv.zw);
+                half4 topFoamColor = foamSurfaceTex * _TopColor;
+                // the normal for back face are required to calculate from very begin. trade off don't apply
+                topFoamColor.rgb = lerp(vRefrA.rgb, topFoamColor.rgb, topFoamColor.a); // + backFaceLight;
+                half4 topFoamColored = fillMask * topFoamColor;
 
                 // foam edge
+                half4 foamTex = SAMPLE_TEXTURE2D(_FoamTex, sampler_FoamTex, IN.uv.xy);
                 half4 foamMask = (fillMask - step(IN.fillEdge, (edge - _Rim)));
                 half4 foamEdgeColor = foamTex * _FoamColor;
                 foamEdgeColor.rgb = lerp(vRefrA.rgb, foamEdgeColor.rgb, foamEdgeColor.a) + ImpuritiesLight;
@@ -273,7 +284,7 @@ Shader "Kit/Week06/Fake Liquid V3"
 
                 // rest of the liquid                
                 half4 liquidMask = fillMask - foamMask;
-                half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv) * _Color;
+                half4 texColor = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uv.xy) * _Color;
                 half3 liquidColor = lerp(disolvedSceneColor.rgb, texColor.rgb, texColor.a) + ImpuritiesLight;
                 half4 liquidColored = liquidMask * half4(liquidColor, 1);
 
@@ -282,10 +293,10 @@ Shader "Kit/Week06/Fake Liquid V3"
                 //        liquidMask * half4(0,1,0,1);
 
                 // both together, with the texture
-                half4 finalResult = liquidColored + foamEdgeColored + topFoamColored;
+                half4 finalResult = liquidColored + foamEdgeColored;
                 finalResult.rgb += fillMask.rgb * RimResult;
                 
-                return finalResult;
+                return lerp(topFoamColored, finalResult, saturate(facing));
             }
             ENDHLSL
         }

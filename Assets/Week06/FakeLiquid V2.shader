@@ -281,9 +281,7 @@ Shader "Kit/Week06/Fake Liquid V2"
                 half4 topFoamColored = fillMask * half4(topFoamColor, 1);
                 
                 //VFACE returns positive for front facing, negative for backfacing
-                half4 fakeLiquidColor = facing > 0 ? finalResult : topFoamColored;
-
-                return fakeLiquidColor;
+                return lerp(topFoamColored, finalResult, saturate(facing));
             }
             ENDHLSL
         }

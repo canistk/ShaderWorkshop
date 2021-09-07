@@ -7,9 +7,10 @@ Shader "Kit/Week06/Fake Liquid V3"
         [header(Liquid)]
         _FoamTex("Foam Texture", 2D) = "white" {}
         _TopColor ("Top Color", Color) = (1,1,1,1)
+        _HotFix ("Hotfix", float) = 1.0
         
 		_FoamColor ("Foam Line Color", Color) = (1,1,1,1)
-        _Rim ("Foam Line Width", Range(0,0.1)) = 0.0    
+        _FoamLine ("Foam Line Width", Range(0,0.1)) = 0.0    
 
         _MainTex("Texture", 2D) = "white" {}
         _Color("Color", color) = (0.5,0.5,0.5,0.5)
@@ -43,7 +44,7 @@ Shader "Kit/Week06/Fake Liquid V3"
         LOD 300
         Zwrite On
         Cull Off
-        AlphaToMask On
+        // AlphaToMask On
 
         Pass
         {
@@ -82,7 +83,7 @@ Shader "Kit/Week06/Fake Liquid V3"
                 half4   _BumpWeight; // xyz-control bump vector, w control the twit between 2 refractive sampler
 
                 half    _Impurities;
-                half    _Rim;
+                half    _FoamLine;
                 half    _RimPower;
                 half    _Refractive;
 
@@ -90,6 +91,7 @@ Shader "Kit/Week06/Fake Liquid V3"
                 half    _RotationHotfix;
                 half    _WobbleX;
                 half    _WobbleZ;
+                half    _HotFix;
             CBUFFER_END
             
 
@@ -106,34 +108,25 @@ Shader "Kit/Week06/Fake Liquid V3"
 
             struct Attributes
             {
-                half4  positionOS  : POSITION;
+                half4   positionOS  : POSITION;
                 half3   normalOS    : NORMAL;
-                half4  tangentOS   : TANGENT;
-                half2  uv          : TEXCOORD0;
+                half4   tangentOS   : TANGENT;
+                half2   uv          : TEXCOORD0;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
-                half4 positionCS               : SV_POSITION;
-                half3 positionWS               : TEXCOORD0;
-                half4 uv                        : TEXCOORD2; // xz = normal uv, zw = bias world space uv
-                half3 normalWS                  : TEXCOORD3;
-                half fillEdge                  : TEXCOORD4;
-                half3 viewDir                  : COLOR;
+                half4   positionCS  : SV_POSITION;
+                half3   positionWS  : TEXCOORD0;
+                half4   uv          : TEXCOORD2; // xz = normal uv, zw = bias world space uv
+                half3   normalWS    : TEXCOORD3;
+                half    fillEdge    : TEXCOORD4;
+                half3   viewDir     : COLOR;
 
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
-
-            //**
-            // InputData -> InputData.hlsl
-            // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl
-            // SurfaceData -> LitInput.hlsl > SurfaceData.hlsl
-            // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/SurfaceData.hlsl
-            // Light -> Lighting.hlsl > RealtimeLights.hlsl
-            // https://github.com/Unity-Technologies/Graphics/blob/master/com.unity.render-pipelines.universal/ShaderLibrary/RealtimeLights.hlsl
-            //**/
 
             // Lighting.hlsl > CalculateBlinnPhong() > LightingLambert()
             half3 CalcBlinnPhong(Light light, half3 normalWS)
@@ -185,23 +178,32 @@ Shader "Kit/Week06/Fake Liquid V3"
 
                 // calculate the UV based on camera view
                 half edge = _LiquidLevel + _RotationHotfix;
-                half distanceY = edge - worldPos.y;
+                half distanceY = edge - worldPosAdjusted.y;
                 half3 camPos = GetCameraPositionWS();
-                half3 viewDirWS = normalize(camPos - worldPos);
+                half3 viewNormal = normalize(camPos - worldPosAdjusted);
+                half3 yDiff = half3(0,distanceY,0);
+
+                // Hotfix : project world position on the Wall, into liquid surface.
+                // the angle had some bug on some angle. not sure how to fix it.
+                // use the magic number 15 to fake the result.
+                half edge2Surface = dot(viewNormal, yDiff);
+                half factor = (1 - saturate(dot(viewNormal, half3(0, 1, 0)))) * 15 * _HotFix;
+                edge2Surface = edge2Surface * factor;
 
                 // Convert UV into world space and bias on liquid surface level.
                 // AKA : locate the surface position of liquid from Backface UV.
-                half3 surfacePosWS = worldPos + viewDirWS * distanceY;
-                half3 p = surfacePosWS + half3(0,1,0) * length(surfacePosWS);
-                half2 projectUV = frac(half2(p.x,p.z)) * 5; // UV bias
+                half3 surfacePosWS = worldPosAdjusted + viewNormal * edge2Surface;
+                half3 p = surfacePosWS;
+                half2 projectUV = frac(half2(p.x,p.z)) * 10; // UV bias
 
                 OUT.uv = half4(IN.uv, projectUV);
-                OUT.viewDir = normalize(camPos - surfacePosWS);
+                // Project vertex to surface.
+                //half facing = step(worldPos.y, edge); // 0 = vertex need to project
+                // OUT.positionWS = lerp(surfacePosWS, worldPos, facing);
                 OUT.positionWS = worldPos;
                 OUT.positionCS = mul(UNITY_MATRIX_VP, half4(OUT.positionWS, 1));
-                // Project vertex to surface.
-                //half pFlag = saturate(step(worldPosAdjusted.y, edge)); // 1 = vertex need to project
-                //OUT.positionWS = lerp(projectedPosWS, worldPos, pFlag);
+                OUT.viewDir = viewNormal;
+                // OUT.viewDir = lerp(normalize(camPos - surfacePosWS), viewNormal, facing);
                 
                 return OUT;
             }
@@ -210,8 +212,8 @@ Shader "Kit/Week06/Fake Liquid V3"
             {
                 half edge = _LiquidLevel + _RotationHotfix;
                 half4 fillMask = step(IN.fillEdge, edge);
-                //if (fillMask.a < 1.0)
-                //    discard;
+                if (fillMask.a < 1.0)
+                    discard;
 
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
@@ -277,7 +279,7 @@ Shader "Kit/Week06/Fake Liquid V3"
 
                 // foam edge
                 half4 foamTex = SAMPLE_TEXTURE2D(_FoamTex, sampler_FoamTex, IN.uv.xy);
-                half4 foamMask = (fillMask - step(IN.fillEdge, (edge - _Rim)));
+                half4 foamMask = (fillMask - step(IN.fillEdge, (edge - _FoamLine)));
                 half4 foamEdgeColor = foamTex * _FoamColor;
                 foamEdgeColor.rgb = lerp(vRefrA.rgb, foamEdgeColor.rgb, foamEdgeColor.a) + ImpuritiesLight;
                 half4 foamEdgeColored = foamMask * foamEdgeColor;

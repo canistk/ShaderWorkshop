@@ -25,6 +25,8 @@ Shader "Kit/Week06/Fake Liquid V3"
         _Refractive ("Refractive", Range(-1,1)) = 0.0
         _BumpWeight ("Bump", vector) = (0.2, 0.2, 1.0, 0.5)
 
+        [Header(Stencil)]
+        [IntRange]_Stencil("Stencil ID", Range(0,255)) = 2
         [HideInInspector] _WobbleX ("WobbleX", Range(-1,1)) = 0.0
 		[HideInInspector] _WobbleZ ("WobbleZ", Range(-1,1)) = 0.0
         [HideInInspector] _RotationHotfix ("Adjust Liquid level during rotation", float) = 0.0
@@ -48,6 +50,17 @@ Shader "Kit/Week06/Fake Liquid V3"
 
         Pass
         {
+            Name "ForwardLit"
+			Tags {
+				"LightMode" = "UniversalForward"
+			}
+            Stencil
+			{
+				Ref [_Stencil]
+				Comp always
+                Pass replace
+                WriteMask 2
+			}
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag

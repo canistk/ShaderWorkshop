@@ -1,0 +1,24 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel FunctionKernel
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+
+struct Particle
+{
+    float3 position;
+    float4 color;
+    float lifetime;
+};
+RWStructuredBuffer<Particle> _Particle;
+
+[numthreads(8,8,1)]
+void FunctionKernel (uint3 id : SV_DispatchThreadID)
+{
+    float r = id.x / 256.0f;
+    float g = id.y / 256.0f;
+    Result[id.xy] = float4(r,g,0,1);
+    
+    //Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+}

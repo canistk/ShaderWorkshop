@@ -10,17 +10,11 @@ struct Particle
     float lifetime;
 };
 RWStructuredBuffer<Particle> myParticles;
-
-RWStructuredBuffer<float3> myPosition;
-RWStructuredBuffer<float3> myVelocity;
-
 float deltaTime;
 
 
-// [numthreads(8,8,1)]
 [numthreads(512,1,1)]
 void FunctionKernel (uint3 id : SV_DispatchThreadID)
 {
 	myParticles[id.x].position = myParticles[id.x].position + myParticles[id.x].velocity * deltaTime;
-    myPosition[id.x] = myPosition[id.x] + myVelocity[id.x] * deltaTime;
 }

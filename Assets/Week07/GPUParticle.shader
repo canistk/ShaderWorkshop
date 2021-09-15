@@ -34,10 +34,6 @@ Shader "Kit/Week07/GPU Particle"
                 float lifetime;
             };
             StructuredBuffer<Particle> myParticles;
-            
-            StructuredBuffer<float3> myPosition;
-            StructuredBuffer<float3> myVelocity;
-
             StructuredBuffer<int> myTriangles;
             StructuredBuffer<float3> myVertices;
 
@@ -56,7 +52,6 @@ Shader "Kit/Week07/GPU Particle"
             v2f vert (MeshData IN)
             {
                 v2f OUT;
-                // float3 pivotWS = myPosition[IN.instanceID];
                 float3 pivotWS =    myParticles[IN.instanceID].position;
                 float3 scale =      myParticles[IN.instanceID].scale;
                 float3 velocity =   myParticles[IN.instanceID].velocity;
@@ -75,7 +70,6 @@ Shader "Kit/Week07/GPU Particle"
 
             float4 frag (v2f IN) : SV_Target
             {
-                //return float4(0,0,0,1);
                 return IN.color;
             }
             ENDHLSL

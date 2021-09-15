@@ -56,12 +56,12 @@ Shader "Kit/Week07/GPU Particle"
             v2f vert (MeshData IN)
             {
                 v2f OUT;
-                // float pivotWS = myPosition[IN.instanceID];
-                float pivotWS = myParticles[IN.instanceID].position;
-                float3 scale = myParticles[IN.instanceID].scale;
-                float3 velocity = myParticles[IN.instanceID].velocity;
-                float4 color = myParticles[IN.instanceID].color;
-                float lifetime = myParticles[IN.instanceID].lifetime;
+                // float3 pivotWS = myPosition[IN.instanceID];
+                float3 pivotWS =    myParticles[IN.instanceID].position;
+                float3 scale =      myParticles[IN.instanceID].scale;
+                float3 velocity =   myParticles[IN.instanceID].velocity;
+                float4 color =      myParticles[IN.instanceID].color;
+                float lifetime =    myParticles[IN.instanceID].lifetime;
 
 
                 int index = myTriangles[IN.vertexId];

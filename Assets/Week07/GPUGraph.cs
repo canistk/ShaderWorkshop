@@ -15,7 +15,7 @@ public class GPUGraph : MonoBehaviour
     [SerializeField] Vector2 m_LifeTimeRange = new Vector2(3f, 5f);
 
     // to define how to dispatch job to GPU,
-    [SerializeField] Vector3Int m_ThreadGroup = new Vector3Int(8,8,1);
+    // [SerializeField] Vector3Int m_ThreadGroup = new Vector3Int(8,8,1);
 
 
     [Header("Draw Bound")]
@@ -58,13 +58,19 @@ public class GPUGraph : MonoBehaviour
 
     private void Update()
     {
-        m_Material.SetBuffer(s_PositionBufferName, m_PositionBuffer);
-        m_Material.SetBuffer(s_VelocityBufferName, m_VelocityBuffer);
-        m_Material.SetBuffer(s_ParticlesBufferName, m_ParticleBuffer);
-
         m_Shader.SetFloat(s_DeltaTime, Time.deltaTime);
-        m_Shader.Dispatch(m_KernelIndex, m_ThreadGroup.x, m_ThreadGroup.y, m_ThreadGroup.z);
-        if (m_Material && m_ParticleAmount > 0)
+        // m_Shader.Dispatch(m_KernelIndex, m_ThreadGroup.x, m_ThreadGroup.y, m_ThreadGroup.z);
+        //if (!m_Material || m_ParticleAmount <= 0)
+        //    return;
+        
+        const int numThread = 512; // must sync with compute shader numthreads setting.
+        int particleCount = m_ParticleAmount;
+        int threadGroup = (particleCount + numThread - 1) / numThread;
+        if (threadGroup <= 0)
+            return;
+        m_Shader.Dispatch(m_KernelIndex, threadGroup, 1, 1);
+
+        if (m_Material)
             Graphics.DrawProcedural(m_Material, GetDrawBounds(), MeshTopology.Triangles, m_MeshTriangles.count, m_ParticleAmount);
         //Graphics.DrawMeshInstancedProcedural(m_Mesh, 0, m_Material, GetDrawBounds(), m_ParticleAmount);
     }
@@ -99,7 +105,6 @@ public class GPUGraph : MonoBehaviour
             }
             Gizmos.color = old;
         }
-
     }
     #endregion System
 
@@ -149,7 +154,6 @@ public class GPUGraph : MonoBehaviour
         if (!(m_Shader && m_Material && m_Mesh))
             return;
 
-
         /// Init particle buffer
         if (m_ParticleBuffer == null || !m_ParticleBuffer.IsValid())
         {
@@ -163,13 +167,15 @@ public class GPUGraph : MonoBehaviour
             for (int i = 0; i < m_InitData.Length; i++)
             {
                 m_InitData[i] = new Particle();
-                m_InitData[i].position = new Vector3(i, 0, 0);
+                m_InitData[i].position = Random.insideUnitSphere;
                 m_InitData[i].scale = m_ParticleScale;
-                m_InitData[i].velocity = new Vector3(0, 1f, 0);
+                m_InitData[i].velocity = Random.insideUnitSphere;
                 m_InitData[i].color = Random.ColorHSV();
                 m_InitData[i].lifetime = Random.Range(m_LifeTimeRange.x, m_LifeTimeRange.y);
             }
             m_ParticleBuffer.SetData(m_InitData);
+            m_Shader.SetBuffer(m_KernelIndex, s_ParticlesBufferName, m_ParticleBuffer);
+            m_Material.SetBuffer(s_ParticlesBufferName, m_ParticleBuffer);
         }
 
         if (m_PositionBuffer == null || !m_PositionBuffer.IsValid())
@@ -177,10 +183,12 @@ public class GPUGraph : MonoBehaviour
             m_Positions = new Vector3[m_ParticleAmount];
             for (int i = 0; i < m_Positions.Length; i++)
             {
-                m_Positions[i] = new Vector3(i, 0f, 0f);
+                m_Positions[i] = m_InitData[i].position;
             }
             m_PositionBuffer = new ComputeBuffer(m_ParticleAmount, 3 * 4);
             m_PositionBuffer.SetData(m_Positions);
+            m_Shader.SetBuffer(m_KernelIndex, s_PositionBufferName, m_PositionBuffer);
+            m_Material.SetBuffer(s_PositionBufferName, m_PositionBuffer);
         }
 
         if (m_VelocityBuffer == null || !m_VelocityBuffer.IsValid())
@@ -188,10 +196,12 @@ public class GPUGraph : MonoBehaviour
             var arr = new Vector3[m_ParticleAmount];
             for (int i = 0; i < arr.Length; i++)
             {
-                arr[i] = new Vector3(0f, 1f, 0f);
+                arr[i] = m_InitData[i].velocity;
             }
             m_VelocityBuffer = new ComputeBuffer(m_ParticleAmount, 3 * 4);
             m_VelocityBuffer.SetData(arr);
+            m_Shader.SetBuffer(m_KernelIndex, s_VelocityBufferName, m_VelocityBuffer);
+            m_Material.SetBuffer(s_VelocityBufferName, m_VelocityBuffer);
         }
 
         if (m_Mesh)
@@ -199,10 +209,12 @@ public class GPUGraph : MonoBehaviour
             int[] triangles = m_Mesh.triangles;
             m_MeshTriangles = new ComputeBuffer(triangles.Length, sizeof(float) * 3);
             m_MeshTriangles.SetData(triangles);
+            m_Material.SetBuffer(s_TrianglesBufferName, m_MeshTriangles);
 
             Vector3[] positions = m_Mesh.vertices;
             m_MeshVertices = new ComputeBuffer(positions.Length, sizeof(float) * 3);
             m_MeshVertices.SetData(positions);
+            m_Material.SetBuffer(s_VerticesBufferName, m_MeshVertices);
         }
         
         m_KernelIndex = m_Shader.FindKernel(s_FunctionKernal);
@@ -214,12 +226,6 @@ public class GPUGraph : MonoBehaviour
         m_Shader.GetKernelThreadGroupSizes(m_KernelIndex, out var _x, out var _y, out var _z);
         Debug.Log($"Kernel {m_KernelIndex}, ThreadGroupSize : X {_x}, Y {_y}, Z {_z}");
         
-        m_Shader.SetBuffer(m_KernelIndex, s_ParticlesBufferName, m_ParticleBuffer);
-        m_Shader.SetBuffer(m_KernelIndex, s_PositionBufferName, m_PositionBuffer);
-        m_Shader.SetBuffer(m_KernelIndex, s_VelocityBufferName, m_VelocityBuffer);
-
-        m_Material.SetBuffer(s_TrianglesBufferName, m_MeshTriangles);
-        m_Material.SetBuffer(s_VerticesBufferName, m_MeshVertices);
     }
     private void FreeMemory()
     {

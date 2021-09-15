@@ -18,7 +18,7 @@ float deltaTime;
 
 
 // [numthreads(8,8,1)]
-[numthreads(100,1,1)]
+[numthreads(512,1,1)]
 void FunctionKernel (uint3 id : SV_DispatchThreadID)
 {
 	myParticles[id.x].position = myParticles[id.x].position + myParticles[id.x].velocity * deltaTime;

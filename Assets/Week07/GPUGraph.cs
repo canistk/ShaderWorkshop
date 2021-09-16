@@ -33,9 +33,6 @@ public class GPUGraph : MonoBehaviour
     RenderTexture m_Tex;
     int m_KernelIndex;
     
-    
-
-
     #region System
     private void OnEnable()
     {
@@ -157,28 +154,23 @@ public class GPUGraph : MonoBehaviour
             lifeTimeData[i]     = Random.Range(m_LifeTimeRange.x, m_LifeTimeRange.y);
         }
 
-        stride = Marshal.SizeOf(typeof(Vector3));
-        totalStrideSize += stride;
+        totalStrideSize += stride = Marshal.SizeOf(typeof(Vector3));
         m_PositionBuffer = new ComputeBuffer(amount, stride);
         m_PositionBuffer.SetData(m_PositionData);
 
-        stride = Marshal.SizeOf(typeof(Vector3));
-        totalStrideSize += stride;
+        totalStrideSize += stride = Marshal.SizeOf(typeof(Vector3));
         m_ScaleBuffer = new ComputeBuffer(amount, stride);
         m_ScaleBuffer.SetData(scaleData);
 
-        stride = Marshal.SizeOf(typeof(Vector3));
-        totalStrideSize += stride;
+        totalStrideSize += stride = Marshal.SizeOf(typeof(Vector3));
         m_VelocityBuffer = new ComputeBuffer(amount, stride);
         m_VelocityBuffer.SetData(velocityData);
 
-        stride = Marshal.SizeOf(typeof(Color));
-        totalStrideSize += stride;
+        totalStrideSize += stride = Marshal.SizeOf(typeof(Color));
         m_ColorBuffer = new ComputeBuffer(amount, stride);
         m_ColorBuffer.SetData(colorData);
 
-        stride = Marshal.SizeOf(typeof(float));
-        totalStrideSize += stride;
+        totalStrideSize += stride = Marshal.SizeOf(typeof(float));
         m_LifetimeBuffer = new ComputeBuffer(amount, stride);
         m_LifetimeBuffer.SetData(lifeTimeData);
 

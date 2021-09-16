@@ -1,20 +1,14 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel FunctionKernel
 
-struct Particle
-{
-    float3 position;
-    float3 scale;
-    float3 velocity;
-    float4 color;
-    float lifetime;
-};
-RWStructuredBuffer<Particle> myParticles;
+RWStructuredBuffer<float3> myPositions, myScale, myVelocity;
+RWStructuredBuffer<float4> myColor;
+RWStructuredBuffer<float> myLifeTime;
 float deltaTime;
 
 
 [numthreads(512,1,1)]
 void FunctionKernel (uint3 id : SV_DispatchThreadID)
 {
-	myParticles[id.x].position = myParticles[id.x].position + myParticles[id.x].velocity * deltaTime;
+	myPositions[id.x] = myPositions[id.x] + myVelocity[id.x] * deltaTime;
 }

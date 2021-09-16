@@ -24,18 +24,13 @@ Shader "Kit/Week07/GPU Particle"
             CBUFFER_START(UnityPerMaterial)
                 half4   _Color;
             CBUFFER_END
-
-            struct Particle
-            {
-                float3 position;
-                float3 scale;
-                float3 velocity;
-                float4 color;
-                float lifetime;
-            };
-            StructuredBuffer<Particle> myParticles;
+            
             StructuredBuffer<int> myTriangles;
             StructuredBuffer<float3> myVertices;
+
+            StructuredBuffer<float3> myPositions, myScale, myVelocity;
+            StructuredBuffer<float4> myColor;
+            StructuredBuffer<float> myLifeTime;
 
             struct MeshData
             {
@@ -52,11 +47,11 @@ Shader "Kit/Week07/GPU Particle"
             v2f vert (MeshData IN)
             {
                 v2f OUT;
-                float3 pivotWS =    myParticles[IN.instanceID].position;
-                float3 scale =      myParticles[IN.instanceID].scale;
-                float3 velocity =   myParticles[IN.instanceID].velocity;
-                float4 color =      myParticles[IN.instanceID].color;
-                float lifetime =    myParticles[IN.instanceID].lifetime;
+                float3 pivotWS =    myPositions[IN.instanceID];
+                float3 scale =      myScale[IN.instanceID];
+                float3 velocity =   myVelocity[IN.instanceID];
+                float4 color =      myColor[IN.instanceID];
+                float lifetime =    myLifeTime[IN.instanceID];
 
 
                 int index = myTriangles[IN.vertexId];

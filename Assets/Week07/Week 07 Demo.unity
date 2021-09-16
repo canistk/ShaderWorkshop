@@ -294,14 +294,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7d455a42a1d6df4e9588bb717293737, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
   m_Material: {fileID: 2100000, guid: a6d624ad9df96124095c1525054513b6, type: 2}
   m_Shader: {fileID: 7200000, guid: 18b196380cc2d4f428064ff844fda12d, type: 3}
-  m_ParticleAmount: 1000
-  m_ParticleScale: {x: 1, y: 1, z: 1}
+  m_ParticleAmount: 100000
+  m_ParticleScale: {x: 0.1, y: 0.1, z: 0.1}
   m_LifeTimeRange: {x: 3, y: 5}
   m_Offset: {x: 0, y: 0, z: 0}
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 100, y: 100, z: 100}
   m_GizmosDebug: 0
 --- !u!4 &843130636
 Transform:
@@ -310,13 +310,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 843130632}
-  m_LocalRotation: {x: -0, y: -0.40535808, z: -0, w: 0.91415805}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: -47.827, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &857496554
 GameObject:
   m_ObjectHideFlags: 0

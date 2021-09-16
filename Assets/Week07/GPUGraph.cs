@@ -1,10 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEngine;
 /// <summary>
 /// https://github.com/SimpleTalkCpp/workshop-2021-07-unity-shader/tree/main/Assets/Week007
 /// </summary>
-[ExecuteInEditMode]
+// [ExecuteInEditMode]
 public class GPUGraph : MonoBehaviour
 {
     [SerializeField] Mesh m_Mesh;
@@ -29,14 +30,11 @@ public class GPUGraph : MonoBehaviour
             size = m_Size
         };
     }
-    ComputeBuffer m_ParticleBuffer, m_MeshTriangles, m_MeshVertices;
     RenderTexture m_Tex;
     int m_KernelIndex;
-    const string s_FunctionKernal = "FunctionKernel";
-    static int s_ParticlesBufferName = Shader.PropertyToID("myParticles");
-    static int s_TrianglesBufferName = Shader.PropertyToID("myTriangles");
-    static int s_VerticesBufferName = Shader.PropertyToID("myVertices");
-    static int s_DeltaTime = Shader.PropertyToID("deltaTime");
+    
+    
+
 
     #region System
     private void OnEnable()
@@ -50,6 +48,12 @@ public class GPUGraph : MonoBehaviour
     }
 
     private void Update()
+    {
+        // if (Application.isPlaying)
+        Execute();
+    }
+
+    private void Execute()
     {
         m_Shader.SetFloat(s_DeltaTime, Time.deltaTime);
         
@@ -68,17 +72,16 @@ public class GPUGraph : MonoBehaviour
     {
         if (!m_GizmosDebug)
             return;
-        if (m_ParticleBuffer != null && m_ParticleBuffer.IsValid())
+        if (m_PositionBuffer != null && m_PositionBuffer.IsValid())
         {
-            m_ParticleBuffer.GetData(m_OutputData);
-            if (m_OutputData == null)
+            m_PositionBuffer.GetData(m_PositionData);
+            if (m_PositionData == null)
                 return;
 
             Color old = Gizmos.color;
-            foreach (var p in m_OutputData)
+            foreach (var p in m_PositionData)
             {
-                Gizmos.color = p.color;
-                Gizmos.DrawSphere(p.position, 0.05f);
+                Gizmos.DrawSphere(p, 0.05f);
             }
             Gizmos.color = old;
         }
@@ -86,32 +89,16 @@ public class GPUGraph : MonoBehaviour
     #endregion System
 
     #region Particle data structure and stride size
-    public struct Particle
-    {
-        public Vector3 position;
-        public Vector3 scale;
-        public Vector3 velocity;
-        public Color color;
-        public float lifetime;
-    };
-    private Particle[]
-        m_InitData, // should only use for init. stay global for debug purpose.
-        m_OutputData; // for debug purpose.
-    private int CalStrideSize()
-    {
-        // float = 1 x 4 byte = 4 stride,
-        // Vector3 = 3 x 4 bytes = 12 stride
-#if true
-        return System.Runtime.InteropServices.Marshal.SizeOf(typeof(Particle));
-#else
-        int sizeOfFloat = sizeof(float);
-        int sizeOfVector3 = 3 * sizeOfFloat;
-        int sizeOfColor = 4 * sizeOfFloat;
-        int stride = 3 * sizeOfVector3 + sizeOfColor + sizeOfFloat;
-        Debug.Log("Stride = " + stride);
-        return stride;
-#endif
-    }
+    const string s_FunctionKernal = "FunctionKernel";
+    ComputeBuffer m_MeshTriangles, m_MeshVertices;
+    ComputeBuffer m_PositionBuffer, m_ScaleBuffer, m_VelocityBuffer, m_ColorBuffer, m_LifetimeBuffer;
+    static readonly int s_TrianglesBufferName = Shader.PropertyToID("myTriangles");
+    static readonly int s_VerticesBufferName = Shader.PropertyToID("myVertices");
+    static readonly int s_PositionBufferName = Shader.PropertyToID("myPositions");
+    static readonly int s_DeltaTime = Shader.PropertyToID("deltaTime");
+
+    private Vector3[] m_PositionData; // stay global for debug purpose.
+
     string GetReadableSize(double len)
     {
         string[] sizes = { "B", "KB", "MB", "GB", "TB" };
@@ -130,30 +117,7 @@ public class GPUGraph : MonoBehaviour
         if (!(m_Shader && m_Material && m_Mesh))
             return;
 
-        /// Init particle buffer
-        if (m_ParticleBuffer == null || !m_ParticleBuffer.IsValid())
-        {
-            int stride = CalStrideSize();
-            string memSize = GetReadableSize(m_ParticleAmount * stride);
-            Debug.Log($"Alloc GPU memory : total : {memSize}, stride = {stride}");
-            m_ParticleBuffer = new ComputeBuffer(m_ParticleAmount, stride);
-
-            m_InitData = new Particle[m_ParticleAmount];
-            m_OutputData = new Particle[m_ParticleAmount];
-            for (int i = 0; i < m_InitData.Length; i++)
-            {
-                m_InitData[i] = new Particle();
-                m_InitData[i].position = Random.insideUnitSphere;
-                m_InitData[i].scale = m_ParticleScale;
-                m_InitData[i].velocity = Random.insideUnitSphere;
-                m_InitData[i].color = Random.ColorHSV();
-                m_InitData[i].lifetime = Random.Range(m_LifeTimeRange.x, m_LifeTimeRange.y);
-            }
-            m_ParticleBuffer.SetData(m_InitData);
-            m_Shader.SetBuffer(m_KernelIndex, s_ParticlesBufferName, m_ParticleBuffer);
-            m_Material.SetBuffer(s_ParticlesBufferName, m_ParticleBuffer);
-        }
-
+        // pass mesh into material -> GPU shader.
         if (m_Mesh)
         {
             int[] triangles = m_Mesh.triangles;
@@ -161,12 +125,12 @@ public class GPUGraph : MonoBehaviour
             m_MeshTriangles.SetData(triangles);
             m_Material.SetBuffer(s_TrianglesBufferName, m_MeshTriangles);
 
-            Vector3[] positions = m_Mesh.vertices;
-            m_MeshVertices = new ComputeBuffer(positions.Length, sizeof(float) * 3);
-            m_MeshVertices.SetData(positions);
+            Vector3[] vertex = m_Mesh.vertices;
+            m_MeshVertices = new ComputeBuffer(vertex.Length, sizeof(float) * 3);
+            m_MeshVertices.SetData(vertex);
             m_Material.SetBuffer(s_VerticesBufferName, m_MeshVertices);
         }
-        
+
         m_KernelIndex = m_Shader.FindKernel(s_FunctionKernal);
         if (m_KernelIndex < 0)
         {
@@ -175,8 +139,64 @@ public class GPUGraph : MonoBehaviour
         }
         m_Shader.GetKernelThreadGroupSizes(m_KernelIndex, out var _x, out var _y, out var _z);
         Debug.Log($"Kernel {m_KernelIndex}, ThreadGroupSize : X {_x}, Y {_y}, Z {_z}");
-        
+        int totalStrideSize = 0, stride;
+        int amount = m_ParticleAmount;
+
+        m_PositionData = new Vector3[amount];
+        Vector3[] scaleData = new Vector3[amount];
+        Vector3[] velocityData = new Vector3[amount];
+        Color[] colorData = new Color[amount];
+        float[] lifeTimeData = new float[amount];
+
+        for (int i = 0; i < amount; i++)
+        {
+            m_PositionData[i]   = Random.insideUnitSphere;
+            scaleData[i]        = m_ParticleScale;
+            velocityData[i]     = Random.insideUnitSphere;
+            colorData[i]        = Random.ColorHSV();
+            lifeTimeData[i]     = Random.Range(m_LifeTimeRange.x, m_LifeTimeRange.y);
+        }
+
+        stride = Marshal.SizeOf(typeof(Vector3));
+        totalStrideSize += stride;
+        m_PositionBuffer = new ComputeBuffer(amount, stride);
+        m_PositionBuffer.SetData(m_PositionData);
+
+        stride = Marshal.SizeOf(typeof(Vector3));
+        totalStrideSize += stride;
+        m_ScaleBuffer = new ComputeBuffer(amount, stride);
+        m_ScaleBuffer.SetData(scaleData);
+
+        stride = Marshal.SizeOf(typeof(Vector3));
+        totalStrideSize += stride;
+        m_VelocityBuffer = new ComputeBuffer(amount, stride);
+        m_VelocityBuffer.SetData(velocityData);
+
+        stride = Marshal.SizeOf(typeof(Color));
+        totalStrideSize += stride;
+        m_ColorBuffer = new ComputeBuffer(amount, stride);
+        m_ColorBuffer.SetData(colorData);
+
+        stride = Marshal.SizeOf(typeof(float));
+        totalStrideSize += stride;
+        m_LifetimeBuffer = new ComputeBuffer(amount, stride);
+        m_LifetimeBuffer.SetData(lifeTimeData);
+
+        m_Shader.SetBuffer(m_KernelIndex, s_PositionBufferName, m_PositionBuffer);
+        m_Shader.SetBuffer(m_KernelIndex, "myScale", m_ScaleBuffer);
+        m_Shader.SetBuffer(m_KernelIndex, "myVelocity", m_VelocityBuffer);
+        m_Shader.SetBuffer(m_KernelIndex, "myColor", m_ColorBuffer);
+        m_Shader.SetBuffer(m_KernelIndex, "myLifeTime", m_LifetimeBuffer);
+        m_Material.SetBuffer(s_PositionBufferName, m_PositionBuffer);
+        m_Material.SetBuffer("myScale", m_ScaleBuffer);
+        m_Material.SetBuffer("myVelocity", m_VelocityBuffer);
+        m_Material.SetBuffer("myColor", m_ColorBuffer);
+        m_Material.SetBuffer("myLifeTime", m_LifetimeBuffer);
+
+        string memSize = GetReadableSize(amount * totalStrideSize);
+        Debug.Log($"Alloc GPU memory : total : {memSize}, stride = {totalStrideSize}");
     }
+
     private void FreeMemory()
     {
         if (m_Tex)
@@ -184,8 +204,12 @@ public class GPUGraph : MonoBehaviour
             m_Tex.Release();
             m_Tex = null;
         }
-        m_ParticleBuffer.Dispose(); m_ParticleBuffer = null;
-        m_MeshTriangles.Dispose(); m_MeshTriangles = null;
-        m_MeshVertices.Dispose(); m_MeshVertices = null;
+        m_PositionBuffer.Dispose(); m_PositionBuffer = null;
+        m_ScaleBuffer.Dispose();    m_ScaleBuffer = null;
+        m_VelocityBuffer.Dispose(); m_VelocityBuffer = null;
+        m_ColorBuffer.Dispose();    m_ColorBuffer = null;
+        m_LifetimeBuffer.Dispose(); m_LifetimeBuffer = null;
+        m_MeshTriangles.Dispose();  m_MeshTriangles = null;
+        m_MeshVertices.Dispose();   m_MeshVertices = null;
     }
 }
